@@ -1,0 +1,32 @@
+{
+  "name": "autoparts-db",
+  "version": "1.0.0",
+  "description": "Database layer (Agent 02B.2) — PostgreSQL + Drizzle ORM for the auto parts catalog system",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/db/index.ts",
+    "./schema": "./src/db/schema/index.ts",
+    "./relations": "./src/db/relations/index.ts"
+  },
+  "scripts": {
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx src/db/utils/migrate.ts",
+    "db:seed": "tsx src/db/seed/index.ts",
+    "db:reset": "tsx src/db/utils/reset.ts",
+    "db:studio": "drizzle-kit studio",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.36.4",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/pg": "^8.11.10",
+    "drizzle-kit": "^0.28.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
