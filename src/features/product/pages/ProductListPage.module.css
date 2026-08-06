@@ -1,0 +1,63 @@
+.page {
+  padding: var(--space-6) 0;
+}
+
+.breadcrumbRow {
+  margin-bottom: var(--space-5);
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.title {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.count {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.pagination {
+  margin-top: var(--space-8);
+  display: flex;
+  justify-content: center;
+}
+
+.errorState {
+  text-align: center;
+  padding: var(--space-16) var(--space-4);
+  color: var(--color-danger);
+}
+
+.errorIcon {
+  font-size: 48px;
+  margin-bottom: var(--space-4);
+}
+
+.loadingGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+}
+
+@media (min-width: 640px) {
+  .loadingGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .loadingGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
