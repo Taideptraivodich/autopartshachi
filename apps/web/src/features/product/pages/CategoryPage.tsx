@@ -5,8 +5,7 @@ import Breadcrumb from '../../../components/ui/Breadcrumb';
 import { Pagination, SkeletonCard } from '../../../components/ui';
 import ProductGrid from '../components/ProductGrid';
 import {
-  fetchCategoryBySlug,
-  fetchProductsByCategoryId,
+  fetchProductsByCategory,
   fetchAllCategories,
 } from '../api/product.api';
 import type { ProductListItem, CategoryDetail, CategoryListItem } from '../api/types';
@@ -22,41 +21,45 @@ const CategoryDetailView: React.FC<{ slug: string }> = ({ slug }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
-
+  
   useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    setNotFound(false);
-    setCategory(null);
-    setItems([]);
-    setTotal(0);
-    setPage(1);
-    fetchCategoryBySlug(slug)
-      .then((res) => { if (cancelled) return; setCategory(res.data); })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        const msg = err instanceof Error ? err.message : 'Lỗi tải dữ liệu';
-        if (msg.includes('404') || msg.toLowerCase().includes('not found')) {
-          setNotFound(true);
-        } else {
-          setError(msg);
-        }
-        setLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, [slug]);
+  let cancelled = false;
 
-  useEffect(() => {
-    if (!category) return;
-    let cancelled = false;
-    setLoading(true);
-    fetchProductsByCategoryId(category.id, page, PAGE_SIZE)
-      .then((res) => { if (cancelled) return; setItems(res.data); setTotal(res.meta.total); })
-      .catch((err: unknown) => { if (cancelled) return; setError(err instanceof Error ? err.message : 'Lỗi tải sản phẩm'); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, [category, page]);
+  setLoading(true);
+  setError(null);
+  setNotFound(false);
+
+  fetchProductsByCategory(slug, page, PAGE_SIZE)
+    .then((res) => {
+      if (cancelled) return;
+
+      setCategory(res.category);
+      setItems(res.data);
+      setTotal(res.meta.total);
+    })
+    .catch((err: unknown) => {
+      if (cancelled) return;
+
+      const msg =
+        err instanceof Error ? err.message : 'Lỗi tải dữ liệu';
+
+      if (
+        msg.includes('404') ||
+        msg.toLowerCase().includes('not found')
+      ) {
+        setNotFound(true);
+      } else {
+        setError(msg);
+      }
+    })
+    .finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+
+  return () => {
+    cancelled = true;
+  };
+}, [slug, page]);
 
   const handlePageChange = (newPage: number) => { setPage(newPage); window.scrollTo({ top: 0, behavior: 'smooth' }); };
 
