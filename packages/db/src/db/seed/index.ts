@@ -11,6 +11,7 @@ import { db, closeDb } from "../index";
 import { vehicleBrand, vehicleModel, vehicleGeneration } from "../schema/vehicle";
 import { productBrand, productCategory } from "../schema/product";
 import { oemNumber } from "../schema/oem";
+import { seedProducts } from "./product.seed";
 
 /**
  * Development-only seed data.
@@ -117,6 +118,9 @@ async function main() {
       },
     ])
     .onConflictDoNothing();
+
+  // ── Product seed (Agent 04C) ──────────────────────────────────────────────
+  await seedProducts(db);
 
   console.log("Seed complete.");
 }

@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from "react";
-import MetaTags from "../../../components/ui/MetaTags";
-import Breadcrumb from "../../../components/ui/Breadcrumb";
-import { Pagination, SkeletonCard } from "../../../components/ui";
-import ProductGrid from "../components/ProductGrid";
-import { fetchProductList } from "../api/product.api";
-import type { ProductListItem } from "../api/types";
-import styles from "./ProductListPage.module.css";
+import React, { useEffect, useState } from 'react';
+import MetaTags from '../../../components/ui/MetaTags';
+import Breadcrumb from '../../../components/ui/Breadcrumb';
+import { Pagination, SkeletonCard } from '../../../components/ui';
+import ProductGrid from '../components/ProductGrid';
+import { fetchProductList } from '../api/product.api';
+import type { ProductListItem } from '../api/types';
+import styles from './ProductListPage.module.css';
 
 const PAGE_SIZE = 24;
 
@@ -23,28 +23,24 @@ const ProductListPage: React.FC = () => {
 
     fetchProductList(page, PAGE_SIZE)
       .then((res) => {
-        console.log("API RESPONSE", res);
         if (cancelled) return;
         setItems(res.data);
         setTotal(res.meta.total);
       })
       .catch((err: unknown) => {
         if (cancelled) return;
-        setError(err instanceof Error ? err.message : "Lỗi tải dữ liệu");
+        setError(err instanceof Error ? err.message : 'Lỗi tải dữ liệu');
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
-    console.log("ITEMS", items);
-    console.log("TOTAL", total);
-    return () => {
-      cancelled = true;
-    };
+
+    return () => { cancelled = true; };
   }, [page]);
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -58,7 +54,10 @@ const ProductListPage: React.FC = () => {
         <div className={styles.page}>
           <div className={styles.breadcrumbRow}>
             <Breadcrumb
-              items={[{ label: "Trang chủ", href: "/" }, { label: "Sản phẩm" }]}
+              items={[
+                { label: 'Trang chủ', href: '/' },
+                { label: 'Sản phẩm' },
+              ]}
             />
           </div>
 
@@ -72,9 +71,7 @@ const ProductListPage: React.FC = () => {
           {error ? (
             <div className={styles.errorState}>
               <div className={styles.errorIcon}>⚠️</div>
-              <p>
-                <strong>Không thể tải danh sách sản phẩm.</strong>
-              </p>
+              <p><strong>Không thể tải danh sách sản phẩm.</strong></p>
               <p>{error}</p>
             </div>
           ) : loading ? (

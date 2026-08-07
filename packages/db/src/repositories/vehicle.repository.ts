@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { type Database } from "../db/index.js";
 import { vehicleBrand, vehicleGeneration, vehicleModel } from "../db/schema/vehicle.js";
 
@@ -60,7 +60,7 @@ export class VehicleRepository {
     return this.db
       .select()
       .from(vehicleModel)
-      .where(eq(vehicleModel.vehicleBrandId, brandId) && eq(vehicleModel.isActive, true))
+      .where(and(eq(vehicleModel.vehicleBrandId, brandId), eq(vehicleModel.isActive, true)))
       .orderBy(vehicleModel.name);
   }
 
@@ -87,8 +87,10 @@ export class VehicleRepository {
       .select()
       .from(vehicleGeneration)
       .where(
-        eq(vehicleGeneration.vehicleModelId, modelId) &&
+        and(
+          eq(vehicleGeneration.vehicleModelId, modelId),
           eq(vehicleGeneration.isActive, true),
+        ),
       )
       .orderBy(vehicleGeneration.yearStart);
   }
