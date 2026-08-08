@@ -12,20 +12,28 @@ import {
   CategoryRepository,
   BrandRepository,
   VehicleRepository,
+  OemRepository,
+  SearchRepository,
 } from "autoparts-db/repositories";
 
 import { ProductService } from "./services/product.service.js";
 import { CategoryService } from "./services/category.service.js";
 import { BrandService } from "./services/brand.service.js";
 import { VehicleService } from "./services/vehicle.service.js";
+import { OemService } from "./services/oem.service.js";
+import { SearchService } from "./services/search.service.js";
 import { ProductController } from "./controllers/product.controller.js";
 import { CategoryController } from "./controllers/category.controller.js";
 import { BrandController } from "./controllers/brand.controller.js";
 import { VehicleController } from "./controllers/vehicle.controller.js";
+import { OemController } from "./controllers/oem.controller.js";
+import { SearchController } from "./controllers/search.controller.js";
 import { createProductRouter } from "./routes/product.routes.js";
 import { createCategoryRouter } from "./routes/category.routes.js";
 import { createBrandRouter } from "./routes/brand.routes.js";
 import { createVehicleRouter } from "./routes/vehicle.routes.js";
+import { createOemRouter } from "./routes/oem.routes.js";
+import { createSearchRouter } from "./routes/search.routes.js";
 import { logger } from "./lib/logger.js";
 
 // ---------------------------------------------------------------------------
@@ -37,18 +45,24 @@ const productRepo = new ProductRepository(db);
 const categoryRepo = new CategoryRepository(db);
 const brandRepo = new BrandRepository(db);
 const vehicleRepo = new VehicleRepository(db);
+const oemRepo = new OemRepository(db);
+const searchRepo = new SearchRepository(db);
 
 // Services
 const productService = new ProductService(productRepo, categoryRepo);
 const categoryService = new CategoryService(categoryRepo);
 const brandService = new BrandService(brandRepo, productRepo);
 const vehicleService = new VehicleService(vehicleRepo);
+const oemService = new OemService(oemRepo);
+const searchService = new SearchService(searchRepo);
 
 // Controllers
 const productController = new ProductController(productService);
 const categoryController = new CategoryController(categoryService);
 const brandController = new BrandController(brandService);
 const vehicleController = new VehicleController(vehicleService);
+const oemController = new OemController(oemService);
+const searchController = new SearchController(searchService);
 
 // ---------------------------------------------------------------------------
 // Express app
@@ -62,7 +76,7 @@ app.use(express.json());
 
 // Health check
 app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok", service: "autoparts-api", version: "04B" });
+  res.json({ status: "ok", service: "autoparts-api", version: "06" });
 });
 
 // Routes
@@ -70,6 +84,8 @@ app.use("/api", createProductRouter(productController));
 app.use("/api", createCategoryRouter(categoryController));
 app.use("/api", createBrandRouter(brandController));
 app.use("/api", createVehicleRouter(vehicleController));
+app.use("/api", createOemRouter(oemController));
+app.use("/api", createSearchRouter(searchController));
 
 // 404 fallback
 app.use((_req, res) => {

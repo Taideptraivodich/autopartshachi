@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import MetaTags from '../../components/ui/MetaTags';
 import {
   fetchFeaturedProducts,
@@ -200,8 +200,21 @@ const VehicleBrandsSection: React.FC = () => {
 
 // ── Main HomePage ────────────────────────────────────────────────────────────
 
-const HomePage: React.FC = () => (
-  <>
+const HomePage: React.FC = () => {
+  const [keyword, setKeyword] = useState('');
+
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    const q = keyword.trim();
+
+    window.location.href =
+      q
+        ? `/san-pham?search=${encodeURIComponent(q)}`
+        : '/san-pham';
+  };
+
+  return (  <>
     <MetaTags
       title="Trang chủ"
       description="Cung cấp phụ tùng ô tô chính hãng. Tra cứu theo hãng xe, mã OEM. Giao hàng toàn quốc."
@@ -220,11 +233,16 @@ const HomePage: React.FC = () => (
           Giao hàng toàn quốc trong 24–48 giờ.
         </p>
         <div className={styles.searchPlaceholder} aria-label="Khu vực tìm kiếm">
-          <div className={styles.searchBox}>
+          <form className={styles.searchBox} onSubmit={handleSearch}>
             <span className={styles.searchIcon}>🔍</span>
-            <span className={styles.searchHint}>Nhập tên phụ tùng, mã OEM, hoặc hãng xe...</span>
-            <Link to="/san-pham" className={styles.searchSubmit}>Tìm kiếm</Link>
-          </div>
+            <input
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              placeholder="Nhập tên phụ tùng, mã OEM, hoặc hãng xe..."
+              style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none' }}
+            />
+            <button type="submit" className={styles.searchSubmit}>Tìm kiếm</button>
+          </form>
           <div className={styles.searchTags}>
             <span className={styles.tagLabel}>Tìm nhiều nhất:</span>
             {['Lọc dầu Toyota', 'Má phanh Honda', 'Bugi Mazda', 'Dây curoa Hyundai'].map((tag) => (
@@ -269,6 +287,6 @@ const HomePage: React.FC = () => (
       </div>
     </section>
   </>
-);
+)};
 
 export default HomePage;

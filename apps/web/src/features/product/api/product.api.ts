@@ -107,3 +107,47 @@ export async function fetchFeaturedProducts(
     `/san-pham?page=1&pageSize=${pageSize}`,
   );
 }
+
+// ─────────────────────────────────────────────────────────────
+// OEM lookup
+// ─────────────────────────────────────────────────────────────
+
+export interface OemResult {
+  oemId: number;
+  oemCode: string;
+  status: string;
+  normalizedCode: string | null;
+  issuingVehicleBrand: string | null;
+  matchConfidence: string;
+  product: ProductListItem;
+}
+
+export interface OemLookupResponse {
+  query: string;
+  data: OemResult[];
+  meta: { total: number };
+}
+
+export async function fetchOemLookup(code: string): Promise<OemLookupResponse> {
+  return apiFetch<OemLookupResponse>(`/oem?code=${encodeURIComponent(code)}`);
+}
+
+// ─────────────────────────────────────────────────────────────
+// Search
+// ─────────────────────────────────────────────────────────────
+
+export interface SearchResponse {
+  query: string;
+  data: ProductListItem[];
+  meta: { page: number; pageSize: number; total: number; totalPages: number };
+}
+
+export async function fetchSearch(
+  q: string,
+  page = 1,
+  pageSize = 24,
+): Promise<SearchResponse> {
+  return apiFetch<SearchResponse>(
+    `/search?q=${encodeURIComponent(q)}&page=${page}&pageSize=${pageSize}`,
+  );
+}

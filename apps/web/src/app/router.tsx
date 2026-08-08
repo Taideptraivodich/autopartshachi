@@ -5,8 +5,8 @@ import { PageLoader } from "../components/ui/Skeleton";
 
 // Lazy-loaded pages for code splitting
 const HomePage = lazy(() => import("./pages/HomePage"));
-const HangXePage = lazy(() => import("../features/vehicle/pages/VehiclePage"));
-const ThuongHieuPage = lazy(() => import("../features/brand/pages/BrandPage"));
+const HangXePage = lazy(() => import("./pages/HangXePage"));
+const ThuongHieuPage = lazy(() => import("./pages/ThuongHieuPage"));
 const OemPage = lazy(() => import("./pages/OemPage"));
 const BlogPage = lazy(() => import("./pages/BlogPage"));
 const LienHePage = lazy(() => import("./pages/LienHePage"));

@@ -1,0 +1,134 @@
+.page {
+  padding: var(--space-8) 0 var(--space-16);
+}
+
+.breadcrumbRow {
+  padding: var(--space-4) 0 0;
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-6);
+}
+
+.title {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
+  margin: 0;
+  line-height: var(--leading-tight);
+}
+
+.queryHighlight {
+  color: var(--color-primary-600);
+}
+
+.count {
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Loading */
+.loadingGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-4);
+}
+
+/* States */
+.emptyQuery,
+.errorState,
+.emptyState {
+  text-align: center;
+  padding: var(--space-20) var(--space-4);
+}
+
+.stateIcon {
+  font-size: 3rem;
+  margin-bottom: var(--space-4);
+  line-height: 1;
+}
+
+.stateTitle {
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-3);
+}
+
+.stateDesc {
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-6);
+  font-size: var(--text-base);
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.quickLinks {
+  display: flex;
+  gap: var(--space-4);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.quickLink {
+  color: var(--color-primary-600);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  text-decoration: none;
+  border: 1px solid var(--color-primary-200);
+  border-radius: var(--radius-lg);
+  padding: var(--space-2) var(--space-4);
+  transition: background var(--transition-fast);
+}
+
+.quickLink:hover {
+  background: var(--color-primary-50);
+}
+
+.retryBtn {
+  padding: var(--space-2) var(--space-6);
+  background: var(--color-primary-600);
+  color: white;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+}
+
+.retryBtn:hover {
+  background: var(--color-primary-700);
+}
+
+.tips {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  display: inline-flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  text-align: left;
+}
+
+.tips li::before {
+  content: '→ ';
+  color: var(--color-primary-400);
+}
+
+.link {
+  color: var(--color-primary-600);
+  text-decoration: underline;
+}
+
+.pagination {
+  margin-top: var(--space-8);
+}
