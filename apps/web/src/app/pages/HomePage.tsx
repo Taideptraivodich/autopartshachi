@@ -1,6 +1,204 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import MetaTags from '../../components/ui/MetaTags';
+import {
+  fetchFeaturedProducts,
+  fetchAllCategories,
+  fetchAllBrands,
+  fetchAllVehicleBrands,
+} from '../../features/product/api/product.api';
+import type {
+  ProductListItem,
+  CategoryListItem,
+  BrandListItem,
+  VehicleBrandListItem,
+} from '../../features/product/api/types';
 import styles from './HomePage.module.css';
+
+// ── Tiny inline sub-components ──────────────────────────────────────────────
+
+const FeaturedProductCard: React.FC<{ product: ProductListItem }> = ({ product }) => (
+  <Link to={`/san-pham/${product.slug}`} className={styles.productCard}>
+    <div className={styles.productImg}>
+      {product.featuredImage
+        ? <img src={product.featuredImage} alt={product.name} loading="lazy" />
+        : '🔩'}
+    </div>
+    <div className={styles.productBody}>
+      <p className={styles.productName}>{product.name}</p>
+      {product.brand && <p className={styles.productBrand}>{product.brand.name}</p>}
+      <p className={styles.productSku}>{product.sku}</p>
+      {product.status === 'con_hang' && <span className={styles.productStatus}>Còn hàng</span>}
+    </div>
+  </Link>
+);
+
+// ── Sections ────────────────────────────────────────────────────────────────
+
+const FeaturedProductsSection: React.FC = () => {
+  const [products, setProducts] = useState<ProductListItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchFeaturedProducts(8)
+      .then((res) => setProducts(res.data))
+      .catch(() => {/* silent — home page degrades gracefully */})
+      .finally(() => setLoading(false));
+  }, []);
+
+  return (
+    <section className={styles.section}>
+      <div className="container">
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>Sản phẩm nổi bật</h2>
+          <Link to="/san-pham" className={styles.sectionLink}>Xem tất cả →</Link>
+        </div>
+        {loading ? (
+          <div className={styles.productsGrid}>
+            {Array.from({ length: 8 }).map((_, i) => <div key={i} className={styles.skeletonProduct} />)}
+          </div>
+        ) : products.length === 0 ? (
+          <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)' }}>
+            Chưa có sản phẩm nào. <Link to="/san-pham" style={{ color: 'var(--color-text-link)' }}>Xem tất cả →</Link>
+          </p>
+        ) : (
+          <div className={styles.productsGrid}>
+            {products.map((p) => <FeaturedProductCard key={p.id} product={p} />)}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+};
+
+const PopularCategoriesSection: React.FC = () => {
+  const [categories, setCategories] = useState<CategoryListItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchAllCategories()
+      .then((res) => setCategories(res.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const roots = categories.filter((c) => c.parentCategoryId === null).slice(0, 8);
+
+  // Fallback icons for categories
+  const icons: Record<string, string> = {
+    'he-thong-phanh': '🔧',
+    'he-thong-loc': '🛢',
+  };
+
+  return (
+    <section className={styles.section}>
+      <div className="container">
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>Danh mục phổ biến</h2>
+          <Link to="/danh-muc" className={styles.sectionLink}>Xem tất cả →</Link>
+        </div>
+        {loading ? (
+          <div className={styles.categoryGrid}>
+            {Array.from({ length: 6 }).map((_, i) => <div key={i} className={styles.skeletonCategory} />)}
+          </div>
+        ) : roots.length === 0 ? (
+          <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)' }}>
+            Chưa có danh mục nào.
+          </p>
+        ) : (
+          <div className={styles.categoryGrid}>
+            {roots.map((cat) => (
+              <Link key={cat.id} to={`/danh-muc/${cat.slug}`} className={styles.categoryCard}>
+                <span className={styles.catIcon}>{icons[cat.slug] ?? '📦'}</span>
+                <span className={styles.catName}>{cat.name}</span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+};
+
+const PopularBrandsSection: React.FC = () => {
+  const [brands, setBrands] = useState<BrandListItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchAllBrands()
+      .then((res) => setBrands(res.data.slice(0, 8)))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  return (
+    <section className={`${styles.section} ${styles.sectionAlt}`}>
+      <div className="container">
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>Thương hiệu phụ tùng</h2>
+          <Link to="/thuong-hieu" className={styles.sectionLink}>Xem tất cả →</Link>
+        </div>
+        {loading ? (
+          <div className={styles.brandGrid}>
+            {Array.from({ length: 6 }).map((_, i) => <div key={i} className={styles.skeletonBrand} />)}
+          </div>
+        ) : brands.length === 0 ? (
+          <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)' }}>Chưa có thương hiệu.</p>
+        ) : (
+          <div className={styles.brandGrid}>
+            {brands.map((brand) => (
+              <Link key={brand.id} to={`/thuong-hieu/${brand.slug}`} className={styles.brandCard}>
+                <div className={styles.brandLogo}>{brand.name[0]?.toUpperCase()}</div>
+                <span className={styles.brandName}>{brand.name}</span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+};
+
+const VehicleBrandsSection: React.FC = () => {
+  const [brands, setBrands] = useState<VehicleBrandListItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchAllVehicleBrands()
+      .then((res) => setBrands(res.data.slice(0, 10)))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  return (
+    <section className={styles.section}>
+      <div className="container">
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>Tra cứu theo hãng xe</h2>
+          <Link to="/hang-xe" className={styles.sectionLink}>Xem tất cả →</Link>
+        </div>
+        {loading ? (
+          <div className={styles.brandGrid}>
+            {Array.from({ length: 5 }).map((_, i) => <div key={i} className={styles.skeletonBrand} />)}
+          </div>
+        ) : brands.length === 0 ? (
+          <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)' }}>Chưa có dữ liệu hãng xe.</p>
+        ) : (
+          <div className={styles.brandGrid}>
+            {brands.map((brand) => (
+              <Link key={brand.id} to={`/hang-xe/${brand.slug}`} className={styles.brandCard}>
+                <div className={styles.brandLogo}>{brand.name[0]?.toUpperCase()}</div>
+                <span className={styles.brandName}>{brand.name}</span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+};
+
+// ── Main HomePage ────────────────────────────────────────────────────────────
 
 const HomePage: React.FC = () => (
   <>
@@ -9,7 +207,7 @@ const HomePage: React.FC = () => (
       description="Cung cấp phụ tùng ô tô chính hãng. Tra cứu theo hãng xe, mã OEM. Giao hàng toàn quốc."
     />
 
-    {/* Hero – placeholder for Product/Search agents */}
+    {/* Hero */}
     <section className={styles.hero}>
       <div className="container">
         <div className={styles.heroBadge}>⚙ Phụ tùng chính hãng</div>
@@ -21,71 +219,35 @@ const HomePage: React.FC = () => (
           Hơn 10.000 mã phụ tùng. Tra cứu theo hãng xe, số khung, hoặc mã OEM.
           Giao hàng toàn quốc trong 24–48 giờ.
         </p>
-
-        {/* Search placeholder – Search Agent sẽ thay thế */}
-        <div className={styles.searchPlaceholder} aria-label="Khu vực tìm kiếm – sẽ được tích hợp ở giai đoạn sau">
+        <div className={styles.searchPlaceholder} aria-label="Khu vực tìm kiếm">
           <div className={styles.searchBox}>
             <span className={styles.searchIcon}>🔍</span>
             <span className={styles.searchHint}>Nhập tên phụ tùng, mã OEM, hoặc hãng xe...</span>
-            <button className={styles.searchSubmit}>Tìm kiếm</button>
+            <Link to="/san-pham" className={styles.searchSubmit}>Tìm kiếm</Link>
           </div>
           <div className={styles.searchTags}>
             <span className={styles.tagLabel}>Tìm nhiều nhất:</span>
             {['Lọc dầu Toyota', 'Má phanh Honda', 'Bugi Mazda', 'Dây curoa Hyundai'].map((tag) => (
-              <button key={tag} className={styles.tag}>{tag}</button>
+              <Link key={tag} to="/san-pham" className={styles.tag}>{tag}</Link>
             ))}
           </div>
         </div>
       </div>
     </section>
 
-    {/* Featured categories placeholder */}
-    <section className={styles.section}>
-      <div className="container">
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Danh mục phổ biến</h2>
-          <a href="/danh-muc" className={styles.sectionLink}>Xem tất cả →</a>
-        </div>
-        <div className={styles.categoryGrid}>
-          {[
-            { icon: '🛢', name: 'Lọc & Dầu', count: '2.400+' },
-            { icon: '🔧', name: 'Hệ thống phanh', count: '1.800+' },
-            { icon: '⚡', name: 'Hệ thống điện', count: '3.200+' },
-            { icon: '🔩', name: 'Động cơ', count: '4.100+' },
-            { icon: '💨', name: 'Hệ thống làm mát', count: '900+' },
-            { icon: '🔗', name: 'Truyền động', count: '1.500+' },
-            { icon: '🛞', name: 'Hệ thống treo', count: '2.000+' },
-            { icon: '💡', name: 'Đèn & Điện thân', count: '1.200+' },
-          ].map((cat) => (
-            <a key={cat.name} href="/danh-muc" className={styles.categoryCard}>
-              <span className={styles.catIcon}>{cat.icon}</span>
-              <span className={styles.catName}>{cat.name}</span>
-              <span className={styles.catCount}>{cat.count} mã</span>
-            </a>
-          ))}
-        </div>
-      </div>
-    </section>
+    {/* Featured products – real API */}
+    <FeaturedProductsSection />
 
-    {/* Vehicle brands placeholder */}
-    <section className={`${styles.section} ${styles.sectionAlt}`}>
-      <div className="container">
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Tra cứu theo hãng xe</h2>
-          <a href="/hang-xe" className={styles.sectionLink}>Xem tất cả →</a>
-        </div>
-        <div className={styles.brandGrid}>
-          {['Toyota', 'Honda', 'Hyundai', 'Kia', 'Mazda', 'Ford', 'Mitsubishi', 'Suzuki', 'Isuzu', 'VinFast'].map((brand) => (
-            <a key={brand} href={`/hang-xe/${brand.toLowerCase()}`} className={styles.brandCard}>
-              <div className={styles.brandLogo} aria-hidden="true">{brand[0]}</div>
-              <span className={styles.brandName}>{brand}</span>
-            </a>
-          ))}
-        </div>
-      </div>
-    </section>
+    {/* Popular categories – real API */}
+    <PopularCategoriesSection />
 
-    {/* USP section */}
+    {/* Product brands – real API */}
+    <PopularBrandsSection />
+
+    {/* Vehicle brands – real API */}
+    <VehicleBrandsSection />
+
+    {/* USP */}
     <section className={styles.section}>
       <div className="container">
         <div className={styles.uspGrid}>

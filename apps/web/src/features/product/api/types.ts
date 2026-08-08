@@ -57,6 +57,8 @@ export interface ProductDetail extends ProductListItem {
   images: ProductImage[];
   oemCodes: OemCode[];
   compatibility: CompatibilityEntry[];
+  metaTitle?: string | null;
+  metaDescription?: string | null;
 }
 
 export interface CategoryDetail {
@@ -87,4 +89,27 @@ export interface ProductsByCategory {
   data: ProductListItem[];
   category: CategoryDetail;
   meta: { page: number; pageSize: number; total: number };
+}
+
+export interface CategoryDetailResponse {
+  data: CategoryDetail;
+}
+
+// ── Brand (product brand / thương hiệu phụ tùng) ──────────────────────────
+export interface BrandListItem { id: number; name: string; slug: string; }
+export interface BrandDetail extends BrandListItem {}
+
+export interface BrandDetailResponse {
+  data: BrandDetail;
+  products: PaginatedResponse<ProductListItem>;
+}
+
+// ── Vehicle brand (hãng xe) ────────────────────────────────────────────────
+export interface VehicleBrandListItem {
+  id: number; name: string; slug: string;
+  countryOfOrigin: string | null; logoUrl: string | null;
+}
+export interface VehicleModelItem { id: number; name: string; slug: string; segment: string | null; }
+export interface VehicleBrandDetail extends VehicleBrandListItem {
+  models: VehicleModelItem[];
 }
