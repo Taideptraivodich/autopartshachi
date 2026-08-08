@@ -232,3 +232,168 @@
   text-decoration: none;
   font-size: var(--text-sm);
 }
+
+/* ── Search overlay ──────────────────────────────────────────────────────── */
+
+.searchOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+}
+
+.searchOverlayInner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-3);
+  pointer-events: all;
+  box-shadow: var(--shadow-lg);
+}
+
+.searchBackdrop {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.35);
+  pointer-events: all;
+}
+
+.searchForm {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: var(--color-surface-2);
+  border: 1.5px solid var(--color-border-focus);
+  border-radius: var(--radius-lg);
+  padding: 0 var(--space-3);
+  height: 44px;
+  gap: var(--space-2);
+}
+
+.searchIcon {
+  font-size: 1rem;
+  flex-shrink: 0;
+  color: var(--color-text-tertiary);
+}
+
+.searchInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: var(--text-base);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+}
+
+.searchInput::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+/* Remove browser default search 'x' */
+.searchInput::-webkit-search-decoration,
+.searchInput::-webkit-search-cancel-button,
+.searchInput::-webkit-search-results-button,
+.searchInput::-webkit-search-results-decoration {
+  display: none;
+}
+
+.searchClear {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-tertiary);
+  font-size: 0.75rem;
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.searchClear:hover {
+  color: var(--color-text-primary);
+  background: var(--color-surface-3);
+}
+
+.searchSubmit {
+  flex-shrink: 0;
+  padding: 0 var(--space-4);
+  height: 32px;
+  background: var(--color-primary-600);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.searchSubmit:hover:not(:disabled) {
+  background: var(--color-primary-700);
+}
+
+.searchSubmit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.searchClose {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  transition: background var(--transition-fast);
+}
+
+.searchClose:hover {
+  background: var(--color-surface-2);
+}
+
+/* ── Mobile search in menu ───────────────────────────────────────────────── */
+
+.mobileSearchWrap {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mobileSearchForm {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--color-surface-2);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 0 var(--space-3);
+  height: 40px;
+}
+
+.mobileSearchIcon {
+  font-size: 0.875rem;
+  flex-shrink: 0;
+  color: var(--color-text-tertiary);
+}
+
+.mobileSearchInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+}
+
+.mobileSearchInput::placeholder {
+  color: var(--color-text-tertiary);
+}
