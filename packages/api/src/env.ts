@@ -3,4 +3,5 @@ import { dirname, join } from "path";
 import { config } from "dotenv";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-config({ path: join(__dirname, "../../.env") });
+// src/ -> api/ -> packages/ -> root (3 cấp)
+config({ path: join(__dirname, "../../../.env") });
