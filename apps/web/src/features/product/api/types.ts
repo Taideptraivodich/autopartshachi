@@ -96,7 +96,11 @@ export interface CategoryDetailResponse {
 }
 
 // ── Brand (product brand / thương hiệu phụ tùng) ──────────────────────────
-export interface BrandListItem { id: number; name: string; slug: string; }
+export interface BrandListItem {
+  id: number;
+  name: string;
+  slug: string;
+}
 export interface BrandDetail extends BrandListItem {}
 
 export interface BrandDetailResponse {
@@ -106,10 +110,36 @@ export interface BrandDetailResponse {
 
 // ── Vehicle brand (hãng xe) ────────────────────────────────────────────────
 export interface VehicleBrandListItem {
-  id: number; name: string; slug: string;
-  countryOfOrigin: string | null; logoUrl: string | null;
+  id: number;
+  name: string;
+  slug: string;
+  countryOfOrigin: string | null;
+  logoUrl: string | null;
 }
-export interface VehicleModelItem { id: number; name: string; slug: string; segment: string | null; }
+export interface VehicleModelItem {
+  id: number;
+  name: string;
+  slug: string;
+  segment: string | null;
+}
 export interface VehicleBrandDetail extends VehicleBrandListItem {
   models: VehicleModelItem[];
+}
+
+// ── Search / OEM ─────────────────────────────────────────────
+
+export interface OemResult {
+  productId: number;
+  productName: string;
+  productSlug: string;
+  sku: string;
+  matchedOemCode: string;
+}
+
+export interface SearchResult {
+  id: number;
+  slug: string;
+  name: string;
+  sku: string;
+  featuredImage?: string | null;
 }

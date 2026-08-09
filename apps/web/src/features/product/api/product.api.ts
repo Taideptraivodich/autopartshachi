@@ -8,6 +8,8 @@ import type {
   BrandDetailResponse,
   VehicleBrandListItem,
   VehicleBrandDetail,
+  OemResult,
+  SearchResult,
 } from "./types";
 
 const BASE = "http://localhost:3001/api";
@@ -58,12 +60,18 @@ export async function fetchProductsByCategoryId(
 // Categories
 // ─────────────────────────────────────────────────────────────
 
-export async function fetchAllCategories(): Promise<{ data: CategoryListItem[] }> {
+export async function fetchAllCategories(): Promise<{
+  data: CategoryListItem[];
+}> {
   return apiFetch<{ data: CategoryListItem[] }>("/danh-muc");
 }
 
-export async function fetchCategoryBySlug(slug: string): Promise<{ data: CategoryDetail }> {
-  return apiFetch<{ data: CategoryDetail }>(`/danh-muc/${encodeURIComponent(slug)}`);
+export async function fetchCategoryBySlug(
+  slug: string,
+): Promise<{ data: CategoryDetail }> {
+  return apiFetch<{ data: CategoryDetail }>(
+    `/danh-muc/${encodeURIComponent(slug)}`,
+  );
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -88,12 +96,18 @@ export async function fetchBrandBySlug(
 // Vehicle brands (hãng xe)
 // ─────────────────────────────────────────────────────────────
 
-export async function fetchAllVehicleBrands(): Promise<{ data: VehicleBrandListItem[] }> {
+export async function fetchAllVehicleBrands(): Promise<{
+  data: VehicleBrandListItem[];
+}> {
   return apiFetch<{ data: VehicleBrandListItem[] }>("/hang-xe");
 }
 
-export async function fetchVehicleBrandBySlug(slug: string): Promise<{ data: VehicleBrandDetail }> {
-  return apiFetch<{ data: VehicleBrandDetail }>(`/hang-xe/${encodeURIComponent(slug)}`);
+export async function fetchVehicleBrandBySlug(
+  slug: string,
+): Promise<{ data: VehicleBrandDetail }> {
+  return apiFetch<{ data: VehicleBrandDetail }>(
+    `/hang-xe/${encodeURIComponent(slug)}`,
+  );
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -109,45 +123,27 @@ export async function fetchFeaturedProducts(
 }
 
 // ─────────────────────────────────────────────────────────────
-// OEM lookup
-// ─────────────────────────────────────────────────────────────
-
-export interface OemResult {
-  oemId: number;
-  oemCode: string;
-  status: string;
-  normalizedCode: string | null;
-  issuingVehicleBrand: string | null;
-  matchConfidence: string;
-  product: ProductListItem;
-}
-
-export interface OemLookupResponse {
-  query: string;
-  data: OemResult[];
-  meta: { total: number };
-}
-
-export async function fetchOemLookup(code: string): Promise<OemLookupResponse> {
-  return apiFetch<OemLookupResponse>(`/oem?code=${encodeURIComponent(code)}`);
-}
-
-// ─────────────────────────────────────────────────────────────
 // Search
 // ─────────────────────────────────────────────────────────────
 
-export interface SearchResponse {
-  query: string;
-  data: ProductListItem[];
-  meta: { page: number; pageSize: number; total: number; totalPages: number };
-}
-
 export async function fetchSearch(
-  q: string,
-  page = 1,
-  pageSize = 24,
-): Promise<SearchResponse> {
-  return apiFetch<SearchResponse>(
-    `/search?q=${encodeURIComponent(q)}&page=${page}&pageSize=${pageSize}`,
+  keyword: string,
+): Promise<{ data: SearchResult[] }> {
+  return apiFetch<{ data: SearchResult[] }>(
+    `/search?q=${encodeURIComponent(keyword)}`,
   );
 }
+
+// ─────────────────────────────────────────────────────────────
+// OEM lookup
+// ─────────────────────────────────────────────────────────────
+
+export async function fetchOemLookup(
+  code: string,
+): Promise<{ data: OemResult[] }> {
+  return apiFetch<{ data: OemResult[] }>(
+    `/oem?code=${encodeURIComponent(code)}`,
+  );
+}
+
+export type { OemResult };
