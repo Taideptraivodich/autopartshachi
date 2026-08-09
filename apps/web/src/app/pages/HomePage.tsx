@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import MetaTags from '../../components/ui/MetaTags';
 import {
   fetchFeaturedProducts,
@@ -198,6 +198,53 @@ const VehicleBrandsSection: React.FC = () => {
   );
 };
 
+// ── Hero search ─────────────────────────────────────────────────────────────
+
+const HeroSearch: React.FC = () => {
+  const navigate = useNavigate();
+  const [query, setQuery] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = query.trim();
+    if (!q) return;
+    navigate(`/tim-kiem?q=${encodeURIComponent(q)}`);
+  };
+
+  const quickTags = ['Lọc dầu Toyota', 'Má phanh Honda', 'Bugi Mazda', 'Dây curoa Hyundai'];
+
+  return (
+    <div className={styles.searchPlaceholder} aria-label="Khu vực tìm kiếm">
+      <form className={styles.searchBox} onSubmit={handleSubmit} role="search">
+        <span className={styles.searchIcon}>🔍</span>
+        <input
+          className={styles.searchInput}
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Nhập tên phụ tùng, mã OEM, hoặc hãng xe..."
+          aria-label="Từ khóa tìm kiếm"
+          autoComplete="off"
+        />
+        <button type="submit" className={styles.searchSubmit}>Tìm kiếm</button>
+      </form>
+      <div className={styles.searchTags}>
+        <span className={styles.tagLabel}>Tìm nhiều nhất:</span>
+        {quickTags.map((tag) => (
+          <button
+            key={tag}
+            type="button"
+            className={styles.tag}
+            onClick={() => navigate(`/tim-kiem?q=${encodeURIComponent(tag)}`)}
+          >
+            {tag}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // ── Main HomePage ────────────────────────────────────────────────────────────
 
 const HomePage: React.FC = () => (
@@ -219,19 +266,7 @@ const HomePage: React.FC = () => (
           Hơn 10.000 mã phụ tùng. Tra cứu theo hãng xe, số khung, hoặc mã OEM.
           Giao hàng toàn quốc trong 24–48 giờ.
         </p>
-        <div className={styles.searchPlaceholder} aria-label="Khu vực tìm kiếm">
-          <div className={styles.searchBox}>
-            <span className={styles.searchIcon}>🔍</span>
-            <span className={styles.searchHint}>Nhập tên phụ tùng, mã OEM, hoặc hãng xe...</span>
-            <Link to="/san-pham" className={styles.searchSubmit}>Tìm kiếm</Link>
-          </div>
-          <div className={styles.searchTags}>
-            <span className={styles.tagLabel}>Tìm nhiều nhất:</span>
-            {['Lọc dầu Toyota', 'Má phanh Honda', 'Bugi Mazda', 'Dây curoa Hyundai'].map((tag) => (
-              <Link key={tag} to="/san-pham" className={styles.tag}>{tag}</Link>
-            ))}
-          </div>
-        </div>
+        <HeroSearch />
       </div>
     </section>
 

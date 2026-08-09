@@ -2,58 +2,43 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import MetaTags from '../../components/ui/MetaTags';
 import Breadcrumb from '../../components/ui/Breadcrumb';
-import { Pagination, SkeletonCard } from '../../components/ui';
-import ProductGrid from '../../features/product/components/ProductGrid';
+import { SkeletonCard } from '../../components/ui';
 import { fetchSearch } from '../../features/product/api/product.api';
-import type { ProductListItem } from '../../features/product/api/types';
+import type { SearchResult } from '../../features/product/api/types';
 import styles from './SearchPage.module.css';
 
-const PAGE_SIZE = 24;
-
 const SearchPage: React.FC = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const query = searchParams.get('q') ?? '';
-  const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10) || 1);
 
-  const [items, setItems] = useState<ProductListItem[]>([]);
-  const [total, setTotal] = useState(0);
+  const [items, setItems] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const doSearch = useCallback(
-    (q: string, p: number) => {
-      if (!q.trim()) {
-        setItems([]);
-        setTotal(0);
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      setError(null);
+  const doSearch = useCallback((q: string) => {
+    if (!q.trim()) {
+      setItems([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
 
-      fetchSearch(q, p, PAGE_SIZE)
-        .then((res) => {
-          setItems(res.data);
-          setTotal(res.meta.total);
-        })
-        .catch((err: unknown) => {
-          setError(err instanceof Error ? err.message : 'Lỗi tìm kiếm');
-        })
-        .finally(() => setLoading(false));
-    },
-    [],
-  );
+    fetchSearch(q)
+      .then((res) => {
+        setItems(res.data);
+      })
+      .catch((err: unknown) => {
+        setError(err instanceof Error ? err.message : 'Lỗi tìm kiếm');
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   useEffect(() => {
-    doSearch(query, page);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, page]);
+    doSearch(query);
+  }, [query, doSearch]);
 
-  const handlePageChange = (newPage: number) => {
-    setSearchParams({ q: query, page: String(newPage) });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
+  const total = items.length;
   const hasQuery = query.trim().length > 0;
   const isEmpty = hasQuery && !loading && !error && total === 0;
   const hasResults = hasQuery && !loading && !error && total > 0;
@@ -117,7 +102,7 @@ const SearchPage: React.FC = () => {
                   <div className={styles.stateIcon}>⚠️</div>
                   <h2 className={styles.stateTitle}>Không thể tìm kiếm</h2>
                   <p className={styles.stateDesc}>{error}</p>
-                  <button className={styles.retryBtn} onClick={() => doSearch(query, page)}>
+                  <button className={styles.retryBtn} onClick={() => doSearch(query)}>
                     Thử lại
                   </button>
                 </div>
@@ -146,20 +131,25 @@ const SearchPage: React.FC = () => {
 
               {/* Results */}
               {hasResults && (
-                <>
-                  <ProductGrid products={items} />
-
-                  {total > PAGE_SIZE && (
-                    <div className={styles.pagination}>
-                      <Pagination
-                        page={page}
-                        pageSize={PAGE_SIZE}
-                        total={total}
-                        onPageChange={handlePageChange}
-                      />
-                    </div>
-                  )}
-                </>
+                <div className={styles.resultsGrid}>
+                  {items.map((item) => (
+                    <Link
+                      key={item.id}
+                      to={`/san-pham/${item.slug}`}
+                      className={styles.resultCard}
+                    >
+                      <div className={styles.resultImg}>
+                        {item.featuredImage
+                          ? <img src={item.featuredImage} alt={item.name} loading="lazy" />
+                          : <span>🔩</span>}
+                      </div>
+                      <div className={styles.resultBody}>
+                        <p className={styles.resultName}>{item.name}</p>
+                        <p className={styles.resultSku}>{item.sku}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
               )}
             </>
           )}

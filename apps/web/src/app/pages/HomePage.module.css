@@ -66,7 +66,16 @@
 }
 
 .searchIcon { font-size: var(--text-lg); flex-shrink: 0; }
-.searchHint { flex: 1; font-size: var(--text-sm); color: var(--color-text-tertiary); }
+.searchInput {
+  flex: 1;
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  border: none;
+  outline: none;
+  background: transparent;
+  min-width: 0;
+}
+.searchInput::placeholder { color: var(--color-text-tertiary); }
 .searchSubmit {
   padding: 0.625rem var(--space-5);
   background: var(--color-primary-500);
@@ -100,6 +109,7 @@
   transition: background-color var(--transition-fast);
 }
 .tag:hover { background: rgba(255,255,255,0.25); }
+.tag:is(button) { appearance: none; text-decoration: none; }
 
 /* Sections */
 .section {
