@@ -6,6 +6,7 @@
 import {
   SearchRepository,
   type SearchResult,
+  type SuggestionItem,
 } from "autoparts-db/repositories";
 
 export class SearchService {
@@ -28,6 +29,16 @@ export class SearchService {
       };
     }
     const result = await this.searchRepo.search(trimmed, page, pageSize);
+
+    // Fire-and-forget — lỗi analytics không làm fail search
+    this.searchRepo.logSearch(trimmed).catch(() => {});
+
     return { ...result, query: trimmed };
+  }
+
+  async suggest(query: string): Promise<SuggestionItem[]> {
+    const trimmed = query?.trim() ?? "";
+    if (trimmed.length < 2) return [];
+    return this.searchRepo.suggest(trimmed, 8);
   }
 }

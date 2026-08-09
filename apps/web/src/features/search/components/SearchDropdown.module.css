@@ -1,0 +1,130 @@
+.dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 200;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px 4px;
+}
+
+.sectionTitle {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.clearAll {
+  font-size: 12px;
+  color: #6b7280;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+.clearAll:hover {
+  color: #ef4444;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 6px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+}
+
+.itemBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-size: 14px;
+  color: #1f2937;
+  transition: background 0.1s;
+  border-radius: 0;
+}
+.itemBtn:hover {
+  background: #f3f4f6;
+}
+
+.itemIcon {
+  font-size: 14px;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.itemLabel {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.removeBtn {
+  padding: 8px 14px 8px 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: #9ca3af;
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+.removeBtn:hover {
+  color: #ef4444;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #e5e7eb;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.empty {
+  padding: 14px 16px;
+  font-size: 13px;
+  color: #9ca3af;
+  text-align: center;
+}

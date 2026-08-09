@@ -73,6 +73,8 @@ export const product = pgTable(
     // dictionary) — additive columns only, no new business entity/relation.
     metaTitle: text("meta_title"),
     metaDescription: text("meta_description"),
+    // tsvector — khai báo là text để Drizzle không conflict; query FTS dùng sql raw
+    searchVector: text("search_vector"),
     ...timestamps(),
   },
   (table) => [

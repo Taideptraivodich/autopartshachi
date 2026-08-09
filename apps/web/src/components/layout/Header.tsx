@@ -1,20 +1,113 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, NavLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { NAV_ITEMS } from '../../constants/navigation';
 import { SITE_CONFIG } from '../../constants/site';
 import styles from './Header.module.css';
+import SearchDropdown from '../../features/search/components/SearchDropdown';
+import { useSearchHistory } from '../../features/search/hooks/useSearchHistory';
+import { fetchSearchSuggestions } from '../../features/product/api/product.api';
+import type { SuggestionItem } from '../../features/product/api/types';
 
 const Header: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
+  const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
+  const [suggestionLoading, setSuggestionLoading] = useState(false);
+  const [dropdownVisible, setDropdownVisible] = useState(false);
+  const [historyItems, setHistoryItems] = useState<string[]>([]);
   const location = useLocation();
   const navigate = useNavigate();
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { getHistory, addToHistory, removeFromHistory, clearHistory } = useSearchHistory();
 
   // Pre-fill search input from URL when on /tim-kiem
   const [searchParams] = useSearchParams();
+
+  // Refresh history khi dropdown mở
+  useEffect(() => {
+    if (dropdownVisible) {
+      setHistoryItems(getHistory());
+    }
+  }, [dropdownVisible]);
+
+  // Debounce fetch suggestions khi searchValue thay đổi
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    if (searchValue.length < 2) {
+      setSuggestions([]);
+      setSuggestionLoading(false);
+      return;
+    }
+
+    setSuggestionLoading(true);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetchSearchSuggestions(searchValue);
+        setSuggestions(res.data);
+      } catch {
+        setSuggestions([]);
+      } finally {
+        setSuggestionLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [searchValue]);
+
+  // Click ngoài dropdown → ẩn
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setDropdownVisible(false);
+      }
+    };
+    if (dropdownVisible) {
+      document.addEventListener('mousedown', handler);
+    }
+    return () => document.removeEventListener('mousedown', handler);
+  }, [dropdownVisible]);
+
+  const handleDropdownSelect = useCallback(
+    (value: string, slug?: string) => {
+      setDropdownVisible(false);
+      if (slug) {
+        // Product → navigate thẳng đến trang sản phẩm
+        addToHistory(value);
+        setHistoryItems(getHistory());
+        navigate(`/san-pham/${slug}`);
+      } else {
+        // OEM hoặc history → điền vào input và submit tìm kiếm
+        setSearchValue(value);
+        addToHistory(value);
+        setHistoryItems(getHistory());
+        navigate(`/tim-kiem?q=${encodeURIComponent(value)}`);
+      }
+    },
+    [navigate, addToHistory, getHistory],
+  );
+
+  const handleRemoveHistory = useCallback(
+    (keyword: string) => {
+      removeFromHistory(keyword);
+      setHistoryItems(getHistory());
+    },
+    [removeFromHistory, getHistory],
+  );
+
+  const handleClearHistory = useCallback(() => {
+    clearHistory();
+    setHistoryItems([]);
+  }, [clearHistory]);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -53,6 +146,9 @@ const Header: React.FC = () => {
     e.preventDefault();
     const q = searchValue.trim();
     if (!q) return;
+    addToHistory(q);
+    setHistoryItems(getHistory());
+    setDropdownVisible(false);
     setSearchOpen(false);
     navigate(`/tim-kiem?q=${encodeURIComponent(q)}`);
   };
@@ -123,36 +219,49 @@ const Header: React.FC = () => {
       {searchOpen && (
         <div className={styles.searchOverlay} role="dialog" aria-label="Tìm kiếm">
           <div className={`container ${styles.searchOverlayInner}`}>
-            <form className={styles.searchForm} onSubmit={handleSearchSubmit} role="search">
-              <span className={styles.searchIcon} aria-hidden="true">🔍</span>
-              <input
-                ref={searchInputRef}
-                className={styles.searchInput}
-                type="search"
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-                placeholder="Tìm theo tên, mã SKU, mã OEM, thương hiệu..."
-                aria-label="Tìm kiếm phụ tùng"
-                autoComplete="off"
-              />
-              {searchValue && (
+            <div className={styles.searchFormWrapper} ref={dropdownRef}>
+              <form className={styles.searchForm} onSubmit={handleSearchSubmit} role="search">
+                <span className={styles.searchIcon} aria-hidden="true">🔍</span>
+                <input
+                  ref={searchInputRef}
+                  className={styles.searchInput}
+                  type="search"
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                  onFocus={() => setDropdownVisible(true)}
+                  placeholder="Tìm theo tên, mã SKU, mã OEM, thương hiệu..."
+                  aria-label="Tìm kiếm phụ tùng"
+                  autoComplete="off"
+                />
+                {searchValue && (
+                  <button
+                    type="button"
+                    className={styles.searchClear}
+                    onClick={() => { setSearchValue(''); searchInputRef.current?.focus(); }}
+                    aria-label="Xóa từ khóa"
+                  >
+                    ✕
+                  </button>
+                )}
                 <button
-                  type="button"
-                  className={styles.searchClear}
-                  onClick={() => { setSearchValue(''); searchInputRef.current?.focus(); }}
-                  aria-label="Xóa từ khóa"
+                  type="submit"
+                  className={styles.searchSubmit}
+                  disabled={!searchValue.trim()}
                 >
-                  ✕
+                  Tìm
                 </button>
-              )}
-              <button
-                type="submit"
-                className={styles.searchSubmit}
-                disabled={!searchValue.trim()}
-              >
-                Tìm
-              </button>
-            </form>
+              </form>
+              <SearchDropdown
+                query={searchValue}
+                history={historyItems}
+                suggestions={suggestions}
+                loading={suggestionLoading}
+                onSelect={handleDropdownSelect}
+                onRemoveHistory={handleRemoveHistory}
+                onClearHistory={handleClearHistory}
+                visible={dropdownVisible}
+              />
+            </div>
             <button
               className={styles.searchClose}
               onClick={() => setSearchOpen(false)}

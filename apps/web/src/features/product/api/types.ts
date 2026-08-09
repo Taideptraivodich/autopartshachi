@@ -142,6 +142,13 @@ export interface OemResult {
   matchedOemCode: string;
 }
 
+export interface SuggestionItem {
+  type: "product" | "oem";
+  label: string;
+  value: string;
+  slug?: string;
+}
+
 export interface SearchResult {
   id: number;
   slug: string;

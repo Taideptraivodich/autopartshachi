@@ -397,3 +397,9 @@
 .mobileSearchInput::placeholder {
   color: var(--color-text-tertiary);
 }
+
+/* Search dropdown wrapper — searchForm cần position: relative */
+.searchFormWrapper {
+  position: relative;
+  flex: 1;
+}

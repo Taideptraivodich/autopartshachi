@@ -11,6 +11,7 @@ import type {
   VehicleGenerationItem,
   OemResult,
   SearchResult,
+  SuggestionItem,
 } from "./types";
 
 const BASE = "http://localhost:3001/api";
@@ -143,6 +144,14 @@ export async function fetchSearch(
   );
 }
 
+export async function fetchSearchSuggestions(
+  query: string,
+): Promise<{ data: SuggestionItem[] }> {
+  return apiFetch<{ data: SuggestionItem[] }>(
+    `/search/goi-y?q=${encodeURIComponent(query)}`,
+  );
+}
+
 // ─────────────────────────────────────────────────────────────
 // OEM lookup
 // ─────────────────────────────────────────────────────────────
@@ -155,4 +164,4 @@ export async function fetchOemLookup(
   );
 }
 
-export type { OemResult };
+export type { OemResult, SuggestionItem };
