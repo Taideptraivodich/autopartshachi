@@ -28,4 +28,20 @@ export class VehicleController {
       res.status(500).json({ error: 'Internal server error' });
     }
   };
+
+  // GET /api/hang-xe/dong-xe/:modelId/doi-xe
+  getGenerationsByModel = async (req: Request, res: Response): Promise<void> => {
+    const modelId = parseInt(String(req.params.modelId ?? ""), 10);
+    try {
+      if (!Number.isFinite(modelId) || modelId <= 0) {
+        res.status(400).json({ error: 'modelId không hợp lệ' });
+        return;
+      }
+      const data = await this.vehicleService.getGenerationsByModelId(modelId);
+      res.json({ data });
+    } catch (err) {
+      logger.error(`[VehicleController.getGenerationsByModel] modelId=${modelId}`, err);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
 }

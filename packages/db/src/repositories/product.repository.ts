@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, inArray, SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, like, or, SQL } from "drizzle-orm";
 import { type Database } from "../db/index.js";
 import { product, productBrand, productCategoryMap, productImage } from "../db/schema/product.js";
 
@@ -53,6 +53,19 @@ export interface PaginatedResult<T> {
   pageSize: number;
   totalPages: number;
 }
+
+/** Input for creating/updating a product row (admin CRUD — Handover #2). */
+export type NewProductInput = {
+  productBrandId: number;
+  sku: string;
+  name: string;
+  slug: string;
+  description?: string;
+  specification?: string;
+  status?: "con_hang" | "het_hang" | "ngung_kinh_doanh";
+  metaTitle?: string;
+  metaDescription?: string;
+};
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -256,5 +269,98 @@ export class ProductRepository {
     };
 
     return result;
+  }
+
+  // ── Admin CRUD (Handover #2) ────────────────────────────────────────────
+
+  /** Insert a new product row. Returns the newly generated id. */
+  async create(data: NewProductInput): Promise<number> {
+    const rows = await this.db
+      .insert(product)
+      .values({
+        productBrandId: data.productBrandId,
+        sku: data.sku,
+        name: data.name,
+        slug: data.slug,
+        description: data.description,
+        specification: data.specification,
+        status: data.status,
+        metaTitle: data.metaTitle,
+        metaDescription: data.metaDescription,
+      })
+      .returning({ id: product.id });
+
+    return rows[0]!.id;
+  }
+
+  /** Partially update a product row by id. */
+  async update(id: number, data: Partial<NewProductInput>): Promise<void> {
+    await this.db.update(product).set(data).where(eq(product.id, id));
+  }
+
+  /** Delete a product row by id. Cascading FKs clean up dependent rows. */
+  async delete(id: number): Promise<void> {
+    await this.db.delete(product).where(eq(product.id, id));
+  }
+
+  /** Replace the full set of category links for a product. */
+  async setCategories(productId: number, categoryIds: number[]): Promise<void> {
+    await this.db
+      .delete(productCategoryMap)
+      .where(eq(productCategoryMap.productId, productId));
+
+    if (categoryIds.length === 0) return;
+
+    await this.db
+      .insert(productCategoryMap)
+      .values(categoryIds.map((categoryId) => ({ productId, categoryId })));
+  }
+
+  /** Replace the full set of images for a product. */
+  async setImages(
+    productId: number,
+    images: {
+      imageUrl: string;
+      altText?: string;
+      isThumbnail?: boolean;
+      displayOrder?: number;
+    }[],
+  ): Promise<void> {
+    await this.db.delete(productImage).where(eq(productImage.productId, productId));
+
+    if (images.length === 0) return;
+
+    await this.db.insert(productImage).values(
+      images.map((img) => ({
+        productId,
+        imageUrl: img.imageUrl,
+        altText: img.altText,
+        isThumbnail: img.isThumbnail ?? false,
+        displayOrder: img.displayOrder ?? 0,
+      })),
+    );
+  }
+
+  /**
+   * Return every existing slug equal to slugBase or matching the
+   * "slugBase-N" pattern — used to compute a unique slug on create.
+   */
+  async findBySlugLike(slugBase: string): Promise<string[]> {
+    const rows = await this.db
+      .select({ slug: product.slug })
+      .from(product)
+      .where(or(eq(product.slug, slugBase), like(product.slug, `${slugBase}-%`)));
+
+    return rows.map((r) => r.slug);
+  }
+
+  /** Return the category ids currently linked to a product (admin edit form). */
+  async findCategoryIdsByProductId(productId: number): Promise<number[]> {
+    const rows = await this.db
+      .select({ categoryId: productCategoryMap.categoryId })
+      .from(productCategoryMap)
+      .where(eq(productCategoryMap.productId, productId));
+
+    return rows.map((r) => r.categoryId);
   }
 }

@@ -175,4 +175,65 @@ export class OemRepository {
 
     return results;
   }
+
+  // ── Admin CRUD (Handover #2) ────────────────────────────────────────────
+
+  /**
+   * Tìm oem_number theo code chính xác (case-insensitive), hoặc tạo mới nếu
+   * chưa có. Khi tạo mới, tự tính normalizedCode = uppercase + bỏ dash/space.
+   */
+  async findOrCreateByCode(code: string): Promise<number> {
+    const trimmed = code.trim();
+
+    const existing = await this.db
+      .select({ id: oemNumber.id })
+      .from(oemNumber)
+      .where(ilike(oemNumber.oemNumber, trimmed))
+      .limit(1);
+
+    if (existing[0]) return existing[0].id;
+
+    const normalizedCode = trimmed.toUpperCase().replace(/[-\s]/g, "");
+
+    const inserted = await this.db
+      .insert(oemNumber)
+      .values({
+        oemNumber: trimmed,
+        normalizedCode,
+        status: "hieu_luc",
+      })
+      .returning({ id: oemNumber.id });
+
+    return inserted[0]!.id;
+  }
+
+  /**
+   * Xóa toàn bộ oem_mapping của productId rồi insert lại.
+   */
+  async setOemMappings(productId: number, oemNumberIds: number[]): Promise<void> {
+    await this.db.delete(oemMapping).where(eq(oemMapping.productId, productId));
+
+    if (oemNumberIds.length === 0) return;
+
+    await this.db.insert(oemMapping).values(
+      oemNumberIds.map((oemNumberId) => ({
+        productId,
+        oemNumberId,
+        matchConfidence: "khop_hoan_toan" as const,
+      })),
+    );
+  }
+
+  /** Return oem codes currently mapped to a product (admin edit form). */
+  async findOemCodesByProductId(
+    productId: number,
+  ): Promise<{ oemNumberId: number; code: string }[]> {
+    const rows = await this.db
+      .select({ oemNumberId: oemMapping.oemNumberId, code: oemNumber.oemNumber })
+      .from(oemMapping)
+      .innerJoin(oemNumber, eq(oemMapping.oemNumberId, oemNumber.id))
+      .where(eq(oemMapping.productId, productId));
+
+    return rows;
+  }
 }

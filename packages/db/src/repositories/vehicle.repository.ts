@@ -1,6 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { type Database } from "../db/index.js";
 import { vehicleBrand, vehicleGeneration, vehicleModel } from "../db/schema/vehicle.js";
+import { compatibility } from "../db/schema/compatibility.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -104,5 +105,42 @@ export class VehicleRepository {
       .limit(1);
 
     return rows[0];
+  }
+
+  // ── Admin CRUD (Handover #2) ────────────────────────────────────────────
+
+  /**
+   * Xóa toàn bộ compatibility của productId rồi insert lại.
+   */
+  async setCompatibility(
+    productId: number,
+    entries: { vehicleGenerationId: number; installationPosition: string }[],
+  ): Promise<void> {
+    await this.db.delete(compatibility).where(eq(compatibility.productId, productId));
+
+    if (entries.length === 0) return;
+
+    await this.db.insert(compatibility).values(
+      entries.map((e) => ({
+        productId,
+        vehicleGenerationId: e.vehicleGenerationId,
+        installationPosition: e.installationPosition,
+      })),
+    );
+  }
+
+  /** Return compatibility entries currently linked to a product (admin edit form). */
+  async findCompatibilityByProductId(
+    productId: number,
+  ): Promise<{ vehicleGenerationId: number; installationPosition: string }[]> {
+    const rows = await this.db
+      .select({
+        vehicleGenerationId: compatibility.vehicleGenerationId,
+        installationPosition: compatibility.installationPosition,
+      })
+      .from(compatibility)
+      .where(eq(compatibility.productId, productId));
+
+    return rows;
   }
 }

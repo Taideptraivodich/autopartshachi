@@ -32,5 +32,9 @@ export async function adminApiFetch<T>(
     throw new Error((body as { error?: string }).error ?? `HTTP ${res.status}`);
   }
 
+  if (res.status === 204) {
+    return undefined as T;
+  }
+
   return res.json() as Promise<T>;
 }

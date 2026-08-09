@@ -18,6 +18,8 @@ const ServerErrorPage = lazy(() => import("./pages/ServerErrorPage"));
 // Admin
 const AdminLoginPage = lazy(() => import("./pages/admin/AdminLoginPage"));
 const AdminDashboardPage = lazy(() => import("./pages/admin/AdminDashboardPage"));
+const AdminProductListPage = lazy(() => import("./pages/admin/AdminProductListPage"));
+const AdminProductFormPage = lazy(() => import("./pages/admin/AdminProductFormPage"));
 
 // Agent 03 – Product Catalog
 const SanPhamPage = lazy(
@@ -41,7 +43,9 @@ const router = createBrowserRouter([
     element: <AdminRoute />,
     children: [
       { index: true, element: <AdminDashboardPage /> },
-      // Handover #2 adds product CRUD children here
+      { path: "san-pham", element: <AdminProductListPage /> },
+      { path: "san-pham/moi", element: <AdminProductFormPage /> },
+      { path: "san-pham/:id/sua", element: <AdminProductFormPage /> },
     ],
   },
   // ── Public site ───────────────────────────────────────────────────────────

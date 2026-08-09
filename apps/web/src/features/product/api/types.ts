@@ -125,6 +125,12 @@ export interface VehicleModelItem {
 export interface VehicleBrandDetail extends VehicleBrandListItem {
   models: VehicleModelItem[];
 }
+export interface VehicleGenerationItem {
+  id: number;
+  name: string;
+  yearStart: number;
+  yearEnd: number | null;
+}
 
 // ── Search / OEM ─────────────────────────────────────────────
 

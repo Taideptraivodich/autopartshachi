@@ -27,6 +27,7 @@ import { BrandService } from "./services/brand.service.js";
 import { VehicleService } from "./services/vehicle.service.js";
 import { SearchService } from "./services/search.service.js";
 import { OemService } from "./services/oem.service.js";
+import { AdminProductService } from "./services/admin-product.service.js";
 import { AuthController } from "./controllers/auth.controller.js";
 import { ProductController } from "./controllers/product.controller.js";
 import { CategoryController } from "./controllers/category.controller.js";
@@ -34,6 +35,7 @@ import { BrandController } from "./controllers/brand.controller.js";
 import { VehicleController } from "./controllers/vehicle.controller.js";
 import { SearchController } from "./controllers/search.controller.js";
 import { OemController } from "./controllers/oem.controller.js";
+import { AdminProductController } from "./controllers/admin-product.controller.js";
 import { createAdminRouter } from "./routes/admin.routes.js";
 import { createProductRouter } from "./routes/product.routes.js";
 import { createCategoryRouter } from "./routes/category.routes.js";
@@ -41,6 +43,8 @@ import { createBrandRouter } from "./routes/brand.routes.js";
 import { createVehicleRouter } from "./routes/vehicle.routes.js";
 import { createSearchRouter } from "./routes/search.routes.js";
 import { createOemRouter } from "./routes/oem.routes.js";
+import { createAdminProductRouter } from "./routes/admin-product.routes.js";
+import { requireAdmin } from "./middleware/require-admin.js";
 import { logger } from "./lib/logger.js";
 
 // ---------------------------------------------------------------------------
@@ -64,6 +68,7 @@ const brandService = new BrandService(brandRepo, productRepo);
 const vehicleService = new VehicleService(vehicleRepo);
 const searchService = new SearchService(searchRepo);
 const oemService = new OemService(oemRepo);
+const adminProductService = new AdminProductService(productRepo, oemRepo, vehicleRepo);
 
 // Controllers
 const authController = new AuthController(authService);
@@ -73,6 +78,7 @@ const brandController = new BrandController(brandService);
 const vehicleController = new VehicleController(vehicleService);
 const searchController = new SearchController(searchService);
 const oemController = new OemController(oemService);
+const adminProductController = new AdminProductController(adminProductService, productService);
 
 // ---------------------------------------------------------------------------
 // Express app
@@ -91,6 +97,7 @@ app.get("/api/health", (_req, res) => {
 
 // Routes — admin (login public, rest protected by requireAdmin middleware)
 app.use("/api", createAdminRouter(authController));
+app.use("/api/admin/san-pham", requireAdmin, createAdminProductRouter(adminProductController));
 
 // Routes — public catalog
 app.use("/api", createProductRouter(productController));

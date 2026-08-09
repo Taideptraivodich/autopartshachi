@@ -3,7 +3,8 @@
  * /api/admin/login  — public (no middleware)
  * /api/admin/*      — all other routes require JWT (requireAdmin middleware)
  *
- * Handover #2 will add product-CRUD sub-routes here under the protected router.
+ * Product-CRUD sub-routes (Handover #2) are mounted separately in index.ts
+ * at /api/admin/san-pham, ahead of the generic health-check below.
  */
 
 import { Router } from "express";
@@ -16,14 +17,12 @@ export function createAdminRouter(authController: AuthController): Router {
   // Public: login (no requireAdmin)
   router.post("/admin/login", authController.login);
 
-  // Protected: all /api/admin/* routes below require valid JWT
-  // Handover #2 mounts its sub-routers here, e.g.:
-  //   router.use("/admin", requireAdmin, createProductAdminRouter(...))
-  //
-  // For now we register a simple health-check so the middleware can be tested.
-  router.use("/admin", requireAdmin, ((_req, res) => {
+  // Protected health-check — only responds at exactly /admin or /admin/,
+  // so it never shadows sub-routers (e.g. /admin/san-pham/*) mounted
+  // elsewhere in index.ts.
+  router.get("/admin", requireAdmin, (_req, res) => {
     res.json({ ok: true, message: "Admin area — authenticated" });
-  }) as Router);
+  });
 
   return router;
 }

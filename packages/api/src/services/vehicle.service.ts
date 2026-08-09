@@ -3,7 +3,7 @@
  * Business logic cho hãng xe / dòng xe.
  */
 
-import { VehicleRepository, type VehicleBrand, type VehicleModel } from 'autoparts-db/repositories';
+import { VehicleRepository, type VehicleBrand, type VehicleModel, type VehicleGeneration } from 'autoparts-db/repositories';
 
 export interface VehicleBrandItem {
   id: number;
@@ -18,6 +18,13 @@ export interface VehicleModelItem {
   name: string;
   slug: string;
   segment: string | null;
+}
+
+export interface VehicleGenerationItem {
+  id: number;
+  name: string;
+  yearStart: number;
+  yearEnd: number | null;
 }
 
 export interface VehicleBrandDetail extends VehicleBrandItem {
@@ -38,6 +45,10 @@ function mapModel(m: VehicleModel): VehicleModelItem {
   return { id: m.id, name: m.name, slug: m.slug, segment: m.segment ?? null };
 }
 
+function mapGeneration(g: VehicleGeneration): VehicleGenerationItem {
+  return { id: g.id, name: g.name, yearStart: g.yearStart, yearEnd: g.yearEnd ?? null };
+}
+
 export class VehicleService {
   constructor(private readonly vehicleRepo: VehicleRepository) {}
 
@@ -51,5 +62,11 @@ export class VehicleService {
     if (!brand) return null;
     const models = await this.vehicleRepo.findModels(brand.id);
     return { ...mapBrand(brand), models: models.map(mapModel) };
+  }
+
+  /** Return generations for a given model id — used by the admin compatibility form. */
+  async getGenerationsByModelId(modelId: number): Promise<VehicleGenerationItem[]> {
+    const rows = await this.vehicleRepo.findGenerations(modelId);
+    return rows.map(mapGeneration);
   }
 }

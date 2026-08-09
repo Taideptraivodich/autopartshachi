@@ -8,6 +8,7 @@ import type {
   BrandDetailResponse,
   VehicleBrandListItem,
   VehicleBrandDetail,
+  VehicleGenerationItem,
   OemResult,
   SearchResult,
 } from "./types";
@@ -107,6 +108,14 @@ export async function fetchVehicleBrandBySlug(
 ): Promise<{ data: VehicleBrandDetail }> {
   return apiFetch<{ data: VehicleBrandDetail }>(
     `/hang-xe/${encodeURIComponent(slug)}`,
+  );
+}
+
+export async function fetchVehicleGenerationsByModelId(
+  modelId: number,
+): Promise<{ data: VehicleGenerationItem[] }> {
+  return apiFetch<{ data: VehicleGenerationItem[] }>(
+    `/hang-xe/dong-xe/${modelId}/doi-xe`,
   );
 }
 
