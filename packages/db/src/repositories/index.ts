@@ -5,3 +5,4 @@ export * from "./vehicle.repository.js";
 
 export * from "./oem.repository.js";
 export * from "./search.repository.js";
+export * from "./admin.repository.js";

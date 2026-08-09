@@ -11,7 +11,7 @@
     "./repositories": "./src/repositories/index.ts"
   },
   "scripts": {
-    "db:generate": "drizzle-kit generate",
+    "db:generate": "tsx node_modules/drizzle-kit/bin.cjs generate --config=drizzle.config.ts",
     "db:migrate": "tsx src/db/utils/migrate.ts",
     "db:seed": "tsx src/db/seed/index.ts",
     "db:reset": "tsx src/db/utils/reset.ts",
@@ -19,11 +19,13 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.36.4",
     "pg": "^8.13.1"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.10.2",
     "@types/pg": "^8.11.10",
     "drizzle-kit": "^0.28.1",

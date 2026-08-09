@@ -2,6 +2,7 @@ import React, { lazy, Suspense } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { PublicLayout } from "../components/layout";
 import { PageLoader } from "../components/ui/Skeleton";
+import AdminRoute from "./AdminRoute";
 
 // Lazy-loaded pages for code splitting
 const HomePage = lazy(() => import("./pages/HomePage"));
@@ -13,6 +14,10 @@ const BlogPage = lazy(() => import("./pages/BlogPage"));
 const LienHePage = lazy(() => import("./pages/LienHePage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 const ServerErrorPage = lazy(() => import("./pages/ServerErrorPage"));
+
+// Admin
+const AdminLoginPage = lazy(() => import("./pages/admin/AdminLoginPage"));
+const AdminDashboardPage = lazy(() => import("./pages/admin/AdminDashboardPage"));
 
 // Agent 03 – Product Catalog
 const SanPhamPage = lazy(
@@ -26,6 +31,20 @@ const DanhMucPage = lazy(
 );
 
 const router = createBrowserRouter([
+  // ── Admin (outside PublicLayout) ─────────────────────────────────────────
+  {
+    path: "/admin/login",
+    element: <AdminLoginPage />,
+  },
+  {
+    path: "/admin",
+    element: <AdminRoute />,
+    children: [
+      { index: true, element: <AdminDashboardPage /> },
+      // Handover #2 adds product CRUD children here
+    ],
+  },
+  // ── Public site ───────────────────────────────────────────────────────────
   {
     path: "/",
     element: <PublicLayout />,
