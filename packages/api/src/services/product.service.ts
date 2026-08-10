@@ -46,6 +46,7 @@ export interface GetProductListParams {
   status?: "con_hang" | "het_hang" | "ngung_kinh_doanh";
   sortBy?: "name" | "createdAt";
   sortDir?: "asc" | "desc";
+  vehicleGenerationId?: number;
 }
 
 /** Chi tiết đầy đủ 1 sản phẩm */
@@ -156,6 +157,7 @@ export class ProductService {
         status,
         sortBy: params.sortBy ?? "createdAt",
         sortDir: params.sortDir ?? "desc",
+        vehicleGenerationId: params.vehicleGenerationId,
       });
 
     return {

@@ -29,6 +29,22 @@ export class VehicleController {
     }
   };
 
+  // GET /api/hang-xe/:brandId/dong-xe
+  getModelsByBrand = async (req: Request, res: Response): Promise<void> => {
+    const brandId = parseInt(String(req.params.brandId ?? ""), 10);
+    if (!Number.isFinite(brandId) || brandId <= 0) {
+      res.status(400).json({ error: "brandId không hợp lệ" });
+      return;
+    }
+    try {
+      const data = await this.vehicleService.getModelsByBrandId(brandId);
+      res.json({ data });
+    } catch (err) {
+      logger.error(`[VehicleController.getModelsByBrand] brandId=${brandId}`, err);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  };
+
   // GET /api/hang-xe/dong-xe/:modelId/doi-xe
   getGenerationsByModel = async (req: Request, res: Response): Promise<void> => {
     const modelId = parseInt(String(req.params.modelId ?? ""), 10);

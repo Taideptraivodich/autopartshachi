@@ -58,6 +58,7 @@ const router = createBrowserRouter([
       { path: "san-pham", element: <SanPhamPage /> },
       { path: "san-pham/:slug", element: <SanPhamDetail /> },
       { path: "hang-xe", element: <HangXePage /> },
+      { path: "hang-xe/:slug/:modelSlug", element: <HangXePage /> },
       { path: "hang-xe/:slug", element: <HangXePage /> },
       { path: "danh-muc", element: <DanhMucPage /> },
       { path: "danh-muc/:slug", element: <DanhMucPage /> },

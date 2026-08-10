@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import MetaTags from '../../components/ui/MetaTags';
+import VehicleSelectorWidget from '../../features/vehicle/components/VehicleSelectorWidget';
 import {
   fetchFeaturedProducts,
   fetchAllCategories,
@@ -247,7 +248,9 @@ const HeroSearch: React.FC = () => {
 
 // ── Main HomePage ────────────────────────────────────────────────────────────
 
-const HomePage: React.FC = () => (
+const HomePage: React.FC = () => {
+  const navigate = useNavigate();
+  return (
   <>
     <MetaTags
       title="Trang chủ"
@@ -267,6 +270,18 @@ const HomePage: React.FC = () => (
           Giao hàng toàn quốc trong 24–48 giờ.
         </p>
         <HeroSearch />
+      </div>
+    </section>
+
+    {/* Vehicle selector */}
+    <section className={styles.vehicleSection}>
+      <div className="container">
+        <VehicleSelectorWidget
+          mode="full"
+          onVehicleSelect={(v) => {
+            if (v) navigate(`/san-pham?vehicleGenerationId=${v.generationId}`);
+          }}
+        />
       </div>
     </section>
 
@@ -304,6 +319,7 @@ const HomePage: React.FC = () => (
       </div>
     </section>
   </>
-);
+  );
+};
 
 export default HomePage;

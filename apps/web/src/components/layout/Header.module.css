@@ -403,3 +403,5 @@
   position: relative;
   flex: 1;
 }
+.vehicleSelector { display: flex; align-items: center; }
+@media (max-width: 768px) { .vehicleSelector { display: none; } }

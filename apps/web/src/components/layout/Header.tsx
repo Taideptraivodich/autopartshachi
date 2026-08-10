@@ -4,6 +4,7 @@ import { NAV_ITEMS } from '../../constants/navigation';
 import { SITE_CONFIG } from '../../constants/site';
 import styles from './Header.module.css';
 import SearchDropdown from '../../features/search/components/SearchDropdown';
+import VehicleSelectorWidget from '../../features/vehicle/components/VehicleSelectorWidget';
 import { useSearchHistory } from '../../features/search/hooks/useSearchHistory';
 import { fetchSearchSuggestions } from '../../features/product/api/product.api';
 import type { SuggestionItem } from '../../features/product/api/types';
@@ -185,6 +186,15 @@ const Header: React.FC = () => {
         </nav>
 
         {/* CTA */}
+        <div className={styles.vehicleSelector}>
+          <VehicleSelectorWidget
+            mode="compact"
+            onVehicleSelect={(v) => {
+              if (v) navigate(`/san-pham?vehicleGenerationId=${v.generationId}`);
+            }}
+          />
+        </div>
+
         <div className={styles.cta}>
           <button
             className={styles.searchBtn}

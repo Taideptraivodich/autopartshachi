@@ -9,6 +9,7 @@ import type {
   VehicleBrandListItem,
   VehicleBrandDetail,
   VehicleGenerationItem,
+  VehicleModelListResponse,
   OemResult,
   SearchResult,
   SuggestionItem,
@@ -45,6 +46,7 @@ export async function fetchProductList(
   if (filters.status) params.set("status", filters.status);
   if (filters.sortBy) params.set("sortBy", filters.sortBy);
   if (filters.sortDir) params.set("sortDir", filters.sortDir);
+  if (filters.vehicleGenerationId) params.set("vehicleGenerationId", String(filters.vehicleGenerationId));
   return apiFetch<PaginatedResponse<ProductListItem>>(`/san-pham?${params}`);
 }
 
@@ -178,6 +180,24 @@ export async function fetchOemLookup(
 ): Promise<{ data: OemResult[] }> {
   return apiFetch<{ data: OemResult[] }>(
     `/oem?code=${encodeURIComponent(code)}`,
+  );
+}
+
+// Lấy models theo brandId — dùng cho VehicleSelector dropdown
+export async function fetchModelsByBrandId(
+  brandId: number,
+): Promise<VehicleModelListResponse> {
+  return apiFetch<VehicleModelListResponse>(`/hang-xe/${brandId}/dong-xe`);
+}
+
+// Lấy sản phẩm tương thích với đời xe
+export async function fetchProductsByVehicle(
+  vehicleGenerationId: number,
+  page = 1,
+  pageSize = 24,
+): Promise<PaginatedResponse<ProductListItem>> {
+  return apiFetch<PaginatedResponse<ProductListItem>>(
+    `/san-pham?vehicleGenerationId=${vehicleGenerationId}&page=${page}&pageSize=${pageSize}`,
   );
 }
 

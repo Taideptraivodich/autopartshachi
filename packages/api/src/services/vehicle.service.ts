@@ -64,6 +64,11 @@ export class VehicleService {
     return { ...mapBrand(brand), models: models.map(mapModel) };
   }
 
+  async getModelsByBrandId(brandId: number): Promise<VehicleModelItem[]> {
+    const models = await this.vehicleRepo.findModels(brandId);
+    return models.map(mapModel);
+  }
+
   /** Return generations for a given model id — used by the admin compatibility form. */
   async getGenerationsByModelId(modelId: number): Promise<VehicleGenerationItem[]> {
     const rows = await this.vehicleRepo.findGenerations(modelId);

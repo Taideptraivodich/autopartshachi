@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import MetaTags from '../../../components/ui/MetaTags';
 import Breadcrumb from '../../../components/ui/Breadcrumb';
-import { fetchAllVehicleBrands, fetchVehicleBrandBySlug } from '../../product/api/product.api';
-import type { VehicleBrandListItem, VehicleBrandDetail } from '../../product/api/types';
+import { fetchAllVehicleBrands, fetchVehicleBrandBySlug, fetchVehicleGenerationsByModelId } from '../../product/api/product.api';
+import type { VehicleBrandListItem, VehicleBrandDetail, VehicleGenerationItem } from '../../product/api/types';
 import styles from './VehiclePage.module.css';
 
 // ── Vehicle Brand List ──────────────────────────────────────────────────────
@@ -183,13 +183,113 @@ const VehicleDetailView: React.FC<{ slug: string }> = ({ slug }) => {
       ) : (
         <div className={styles.modelGrid}>
           {brand?.models.map((model) => (
-            <div key={model.id} className={styles.modelCard}>
+            <Link key={model.id} to={`/hang-xe/${brand.slug}/${model.slug}`} className={styles.modelCard}>
               <span className={styles.modelName}>{model.name}</span>
               {model.segment && (
                 <span className={styles.modelSegment}>{model.segment}</span>
               )}
-            </div>
+            </Link>
           ))}
+        </div>
+      )}
+    </>
+  );
+};
+
+// ── Model Detail View ────────────────────────────────────────────────────────
+
+const ModelDetailView: React.FC<{ brandSlug: string; modelSlug: string }> = ({ brandSlug, modelSlug }) => {
+  const [brand, setBrand] = useState<VehicleBrandDetail | null>(null);
+  const [generations, setGenerations] = useState<VehicleGenerationItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    fetchVehicleBrandBySlug(brandSlug)
+      .then(async (res) => {
+        if (cancelled) return;
+        const b = res.data;
+        setBrand(b);
+        const model = b.models.find((m) => m.slug === modelSlug);
+        if (!model) return;
+        const gRes = await fetchVehicleGenerationsByModelId(model.id);
+        if (!cancelled) setGenerations(gRes.data);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Lỗi tải dữ liệu');
+      })
+      .finally(() => { if (!cancelled) setLoading(false); });
+
+    return () => { cancelled = true; };
+  }, [brandSlug, modelSlug]);
+
+  const model = brand?.models.find((m) => m.slug === modelSlug);
+
+  const breadcrumbItems = [
+    { label: 'Trang chủ', href: '/' },
+    { label: 'Hãng xe', href: '/hang-xe' },
+    { label: brand?.name ?? '...', href: `/hang-xe/${brandSlug}` },
+    { label: model?.name ?? '...' },
+  ];
+
+  if (error) return (
+    <div className={styles.errorState}>
+      <div className={styles.errorIcon}>⚠️</div>
+      <p><strong>Không thể tải dữ liệu.</strong></p>
+      <p>{error}</p>
+    </div>
+  );
+
+  return (
+    <>
+      <MetaTags
+        title={brand && model ? `${brand.name} ${model.name} – Phụ tùng theo đời xe` : 'Đời xe'}
+        description={brand && model ? `Xem các đời xe ${brand.name} ${model.name} và tra cứu phụ tùng phù hợp tại Hachi Việt Nam.` : ''}
+      />
+      <div className={styles.breadcrumbRow}>
+        <Breadcrumb items={breadcrumbItems} />
+      </div>
+
+      <div className={styles.header}>
+        <h1 className={styles.title}>
+          {loading ? 'Đang tải...' : (brand && model ? `${brand.name} ${model.name}` : 'Không tìm thấy')}
+        </h1>
+        <p className={styles.subtitle}>Chọn đời xe để xem phụ tùng phù hợp</p>
+      </div>
+
+      {loading ? (
+        <div className={styles.modelGrid}>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} style={{ height: 96, background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', opacity: 0.5 }} />
+          ))}
+        </div>
+      ) : generations.length === 0 ? (
+        <div className={styles.emptyState}>
+          <p>Chưa có dữ liệu đời xe cho dòng này.</p>
+        </div>
+      ) : (
+        <div className={styles.generationList}>
+          {generations.map((gen) => {
+            const yearStr = gen.yearEnd ? `${gen.yearStart} – ${gen.yearEnd}` : `${gen.yearStart} – nay`;
+            return (
+              <div key={gen.id} className={styles.generationCard}>
+                <div className={styles.generationInfo}>
+                  <span className={styles.generationName}>{gen.name}</span>
+                  <span className={styles.generationYear}>{yearStr}</span>
+                </div>
+                <Link
+                  to={`/san-pham?vehicleGenerationId=${gen.id}`}
+                  className={styles.generationCta}
+                >
+                  Xem phụ tùng →
+                </Link>
+              </div>
+            );
+          })}
         </div>
       )}
     </>
@@ -199,11 +299,17 @@ const VehicleDetailView: React.FC<{ slug: string }> = ({ slug }) => {
 // ── Page shell ──────────────────────────────────────────────────────────────
 
 const VehiclePage: React.FC = () => {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug, modelSlug } = useParams<{ slug: string; modelSlug: string }>();
   return (
     <div className="container">
       <div className={styles.page}>
-        {slug ? <VehicleDetailView slug={slug} /> : <VehicleListView />}
+        {slug && modelSlug ? (
+          <ModelDetailView brandSlug={slug} modelSlug={modelSlug} />
+        ) : slug ? (
+          <VehicleDetailView slug={slug} />
+        ) : (
+          <VehicleListView />
+        )}
       </div>
     </div>
   );

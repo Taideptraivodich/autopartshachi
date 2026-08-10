@@ -60,6 +60,10 @@ export class ProductController {
         ? (rawSortDir as "asc" | "desc")
         : "desc";
 
+      const vehicleGenerationId = req.query.vehicleGenerationId
+        ? parseInt(String(req.query.vehicleGenerationId), 10) || undefined
+        : undefined;
+
       const result = await this.productService.getProductList({
         page,
         pageSize,
@@ -68,6 +72,7 @@ export class ProductController {
         status,
         sortBy,
         sortDir,
+        vehicleGenerationId,
       });
 
       res.json({

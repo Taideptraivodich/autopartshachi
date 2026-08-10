@@ -7,6 +7,11 @@ export interface ProductFilterParams {
   sortBy?: "createdAt" | "name";
   sortDir?: "asc" | "desc";
   page?: number;
+  vehicleGenerationId?: number;
+}
+
+export interface VehicleModelListResponse {
+  data: VehicleModelItem[];
 }
 
 // ─── Product types (mirror API response shapes) ────────────────────────────────

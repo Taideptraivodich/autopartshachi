@@ -1,6 +1,7 @@
 import { and, asc, count, desc, eq, inArray, like, or, SQL } from "drizzle-orm";
 import { type Database } from "../db/index.js";
 import { product, productBrand, productCategoryMap, productImage } from "../db/schema/product.js";
+import { compatibility } from "../db/schema/compatibility.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -44,6 +45,8 @@ export interface FindManyParams {
   page?: number;
   /** Rows per page. Defaults to 20, max 100. */
   pageSize?: number;
+  /** Filter by vehicle generation compatibility. */
+  vehicleGenerationId?: number;
 }
 
 export interface PaginatedResult<T> {
@@ -114,6 +117,7 @@ export class ProductRepository {
       sortDir = "desc",
       page = 1,
       pageSize = DEFAULT_PAGE_SIZE,
+      vehicleGenerationId,
     } = params;
 
     const safePage = Math.max(1, Math.floor(page));
@@ -155,6 +159,21 @@ export class ProductRepository {
     const finalConditions: SQL[] = whereClause ? [whereClause] : [];
     if (productIds !== undefined) {
       finalConditions.push(inArray(product.id, productIds));
+    }
+
+    if (vehicleGenerationId !== undefined) {
+      const compatRows = await this.db
+        .select({ productId: compatibility.productId })
+        .from(compatibility)
+        .where(eq(compatibility.vehicleGenerationId, vehicleGenerationId));
+
+      const compatIds = compatRows.map((r) => r.productId);
+
+      if (compatIds.length === 0) {
+        return { data: [], total: 0, page: safePage, pageSize: safePageSize, totalPages: 0 };
+      }
+
+      finalConditions.push(inArray(product.id, compatIds));
     }
     const finalWhere =
       finalConditions.length > 0 ? and(...finalConditions) : undefined;

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import MetaTags from '../../../components/ui/MetaTags';
 import Breadcrumb from '../../../components/ui/Breadcrumb';
 import { Pagination, SkeletonCard } from '../../../components/ui';
@@ -7,24 +8,39 @@ import FilterSidebar from '../components/FilterSidebar';
 import SortBar from '../components/SortBar';
 import { fetchProductList, fetchAllBrands, fetchAllCategories } from '../api/product.api';
 import type { ProductListItem, BrandListItem, CategoryListItem, ProductFilterParams } from '../api/types';
+import { useVehicleSelector } from '../../vehicle/hooks/useVehicleSelector';
 import styles from './ProductListPage.module.css';
 
 const PAGE_SIZE = 24;
 
 const ProductListPage: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { getSelected, clearSelected } = useVehicleSelector();
+
   const [items, setItems] = useState<ProductListItem[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [filters, setFilters] = useState<ProductFilterParams>({
+  const vehicleGenIdFromUrl = searchParams.get('vehicleGenerationId')
+    ? Number(searchParams.get('vehicleGenerationId'))
+    : undefined;
+
+  const [filters, setFilters] = useState<ProductFilterParams>(() => ({
     sortBy: 'createdAt',
     sortDir: 'desc',
-  });
+    vehicleGenerationId: vehicleGenIdFromUrl,
+  }));
   const [brands, setBrands] = useState<BrandListItem[]>([]);
   const [categories, setCategories] = useState<CategoryListItem[]>([]);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+
+  // Sync vehicleGenerationId từ URL vào filters
+  useEffect(() => {
+    setFilters((f) => ({ ...f, vehicleGenerationId: vehicleGenIdFromUrl }));
+    setPage(1);
+  }, [vehicleGenIdFromUrl]);
 
   // Load brands + categories một lần
   useEffect(() => {
@@ -63,7 +79,22 @@ const ProductListPage: React.FC = () => {
   const handleReset = () => {
     setFilters({ sortBy: 'createdAt', sortDir: 'desc' });
     setPage(1);
+    setSearchParams({});
   };
+
+  const handleClearVehicle = () => {
+    clearSelected();
+    const next = new URLSearchParams(searchParams);
+    next.delete('vehicleGenerationId');
+    setSearchParams(next);
+  };
+
+  const selectedVehicle = getSelected();
+  const vehicleBannerLabel = vehicleGenIdFromUrl && selectedVehicle?.generationId === vehicleGenIdFromUrl
+    ? selectedVehicle.generationLabel
+    : vehicleGenIdFromUrl
+      ? `Đời xe #${vehicleGenIdFromUrl}`
+      : null;
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
@@ -89,6 +120,15 @@ const ProductListPage: React.FC = () => {
           </div>
 
           <h1 className={styles.title}>Sản phẩm phụ tùng</h1>
+
+          {vehicleBannerLabel && (
+            <div className={styles.vehicleBanner}>
+              <span>🚗 Đang lọc phụ tùng cho: <strong>{vehicleBannerLabel}</strong></span>
+              <button className={styles.vehicleBannerClear} onClick={handleClearVehicle}>
+                ✕ Bỏ lọc xe
+              </button>
+            </div>
+          )}
 
           <div className={styles.layout}>
             {/* Sidebar */}

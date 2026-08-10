@@ -225,3 +225,60 @@
   border-radius: var(--radius-lg);
   opacity: 0.6;
 }
+
+/* ── Generation list (ModelDetailView) ─────────────────────────────────── */
+.generationList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.generationCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: border-color 0.15s;
+}
+
+.generationCard:hover {
+  border-color: var(--color-primary);
+}
+
+.generationInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.generationName {
+  font-weight: var(--font-medium);
+  font-size: var(--text-base);
+  color: var(--color-text-primary);
+}
+
+.generationYear {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.generationCta {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+
+.generationCta:hover {
+  opacity: 0.88;
+}
