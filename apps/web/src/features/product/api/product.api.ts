@@ -202,3 +202,27 @@ export async function fetchProductsByVehicle(
 }
 
 export type { OemResult, SuggestionItem };
+
+// ─────────────────────────────────────────────────────────────
+// Lead / Contact
+// ─────────────────────────────────────────────────────────────
+
+export async function submitLead(payload: {
+  name: string;
+  phone: string;
+  message?: string;
+  productName?: string;
+  productSku?: string;
+  source?: string;
+}): Promise<{ data: { id: number } }> {
+  const res = await fetch(`${BASE}/lien-he`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { error?: string }).error ?? `HTTP ${res.status}`);
+  }
+  return res.json() as Promise<{ data: { id: number } }>;
+}

@@ -1,5 +1,5 @@
 /**
- * Product Seed — Agent 04C
+ * Product Seed — Agent 04C (patched HANDOVER_06: real images + oem_mapping)
  * 15 sản phẩm demo phụ tùng ô tô để test API, UI, pagination.
  * Idempotent: onConflictDoNothing trên slug và sku unique.
  */
@@ -144,7 +144,7 @@ export async function seedProducts(db: Database): Promise<void> {
       brandId: idToyotaGenuine,
       categoryIds: [idMaPhanh],
       description: "Má phanh sau chính hãng Toyota dành cho Vios thế hệ 3 (2019–2022). Đảm bảo khớp hoàn toàn với hệ thống phanh OEM, duy trì hiệu năng theo tiêu chuẩn nhà máy.",
-      specification: "Loại: OEM | Vị trí: Sau | Số miếng/bộ: 4 | Mã OEM: 04466-BZ100",
+      specification: "Loại: OEM | Vị trí: Sau | Số miếng/bộ: 4 | Mã OEM: 04465-BZ160",
       status: "con_hang",
     },
 
@@ -277,12 +277,14 @@ export async function seedProducts(db: Database): Promise<void> {
       productId = existing[0]!.id;
     }
 
-    // Insert thumbnail image placeholder
+    // Insert thumbnail image — dùng Picsum với seed = slug (stable, không random)
+    // Pattern: https://picsum.photos/seed/{slug}/400/300
+    const imageUrl = `https://picsum.photos/seed/${def.slug}/400/300`;
     await db
       .insert(productImage)
       .values({
         productId,
-        imageUrl: `/images/products/placeholder.jpg`,
+        imageUrl,
         altText: def.name,
         isThumbnail: true,
         displayOrder: 0,

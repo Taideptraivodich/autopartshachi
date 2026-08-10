@@ -1,6 +1,8 @@
 /**
  * SearchController
  * GET /api/search?q=...&page=1&pageSize=24
+ * GET /api/search/goi-y?q=...
+ * GET /api/search/pho-bien?limit=4
  */
 
 import { type Request, type Response } from "express";
@@ -58,6 +60,20 @@ export class SearchController {
     } catch (err) {
       logger.error(`[SearchController.search] q=${q}`, err);
       res.status(500).json({ error: "Internal server error" });
+    }
+  };
+
+  popular = async (req: Request, res: Response): Promise<void> => {
+    const limit = Math.min(
+      20,
+      Math.max(1, parseInt(String(req.query.limit ?? "4"), 10) || 4),
+    );
+    try {
+      const data = await this.searchService.getPopular(limit);
+      res.json({ data });
+    } catch (err) {
+      logger.error("[SearchController.popular]", err);
+      res.status(500).json({ error: "Lỗi lấy keyword phổ biến" });
     }
   };
 }

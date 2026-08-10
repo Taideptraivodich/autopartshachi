@@ -206,3 +206,39 @@
 .backLink:hover {
   text-decoration: underline;
 }
+
+/* CTA block — HANDOVER_06 */
+.ctaBlock {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  flex-wrap: wrap;
+}
+.ctaCallBtn {
+  flex: 1;
+  min-width: 140px;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  text-align: center;
+  font-weight: var(--font-semibold);
+  font-size: var(--text-sm);
+  transition: opacity 0.15s;
+}
+.ctaCallBtn:hover { opacity: 0.9; }
+.ctaContactBtn {
+  flex: 1;
+  min-width: 140px;
+  padding: var(--space-3) var(--space-4);
+  background: transparent;
+  border: 2px solid var(--color-primary);
+  color: var(--color-primary);
+  border-radius: var(--radius-md);
+  font-weight: var(--font-semibold);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.ctaContactBtn:hover { background: var(--color-primary); color: #fff; }

@@ -2,14 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import MetaTags from '../../../components/ui/MetaTags';
 import Breadcrumb from '../../../components/ui/Breadcrumb';
+import Modal from '../../../components/ui/Modal';
 import { Skeleton, SkeletonText } from '../../../components/ui';
 import ProductGallery from '../components/ProductGallery';
 import OEMBlock from '../components/OEMBlock';
 import CompatibilityBlock from '../components/CompatibilityBlock';
+import ContactQuickForm from '../components/ContactQuickForm';
 import { fetchProductBySlug } from '../api/product.api';
 import RelatedProducts from '../components/RelatedProducts';
 import type { ProductDetail } from '../api/types';
 import styles from './ProductDetailPage.module.css';
+
+// SĐT tư vấn — thay bằng số thực của Hachi
+const HACHI_PHONE = '+84901234567';
 
 const STATUS_LABEL: Record<string, string> = {
   con_hang: 'Còn hàng',
@@ -23,6 +28,7 @@ const ProductDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
@@ -192,6 +198,22 @@ const ProductDetailPage: React.FC = () => {
                   </div>
                 </>
               )}
+
+              {/* CTA block */}
+              <div className={styles.ctaBlock}>
+                <a
+                  href={`tel:${HACHI_PHONE}`}
+                  className={styles.ctaCallBtn}
+                >
+                  📞 Gọi ngay tư vấn
+                </a>
+                <button
+                  className={styles.ctaContactBtn}
+                  onClick={() => setContactOpen(true)}
+                >
+                  💬 Liên hệ đặt hàng
+                </button>
+              </div>
             </div>
           </div>
 
@@ -204,6 +226,20 @@ const ProductDetailPage: React.FC = () => {
           <RelatedProducts currentSlug={product.slug} />
         </div>
       </div>
+
+      {/* Modal liên hệ nhanh */}
+      <Modal
+        open={contactOpen}
+        onClose={() => setContactOpen(false)}
+        title="Liên hệ đặt hàng"
+        size="sm"
+      >
+        <ContactQuickForm
+          productName={product.name}
+          productSku={product.sku}
+          onSuccess={() => setContactOpen(false)}
+        />
+      </Modal>
     </>
   );
 };

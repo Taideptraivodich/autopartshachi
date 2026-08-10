@@ -41,4 +41,8 @@ export class SearchService {
     if (trimmed.length < 2) return [];
     return this.searchRepo.suggest(trimmed, 8);
   }
+
+  async getPopular(limit = 4): Promise<string[]> {
+    return this.searchRepo.getPopularKeywords(limit);
+  }
 }

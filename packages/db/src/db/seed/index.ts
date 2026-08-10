@@ -9,8 +9,9 @@ config({ path: envPath });
 
 import { db, closeDb } from "../index";
 import { vehicleBrand, vehicleModel, vehicleGeneration } from "../schema/vehicle";
-import { productBrand, productCategory } from "../schema/product";
-import { oemNumber } from "../schema/oem";
+import { productBrand, productCategory, product } from "../schema/product";
+import { oemNumber, oemMapping } from "../schema/oem";
+import { eq, or } from "drizzle-orm";
 import { seedProducts } from "./product.seed";
 import { seedAdmin } from "./admin.seed";
 
@@ -122,6 +123,65 @@ async function main() {
 
   // ── Product seed (Agent 04C) ──────────────────────────────────────────────
   await seedProducts(db);
+
+  // ── OEM mapping seed (HANDOVER_06) ────────────────────────────────────────
+  console.log("Seeding oem_mapping...");
+
+  // Lấy oem_number IDs vừa seed
+  const oemRows = await db
+    .select({ id: oemNumber.id, code: oemNumber.oemNumber })
+    .from(oemNumber)
+    .where(
+      or(
+        eq(oemNumber.oemNumber, "04465-BZ160"),
+        eq(oemNumber.oemNumber, "45022-S5A-J01"),
+      ),
+    );
+
+  const oem04465 = oemRows.find((r) => r.code === "04465-BZ160");
+  const oem45022 = oemRows.find((r) => r.code === "45022-S5A-J01");
+
+  // Lấy product IDs theo SKU đúng như đã seed trong product.seed.ts
+  const [p1Rows, p2Rows] = await Promise.all([
+    db
+      .select({ id: product.id })
+      .from(product)
+      .where(eq(product.sku, "TOYG-0446502200"))
+      .limit(1),
+    db
+      .select({ id: product.id })
+      .from(product)
+      .where(eq(product.sku, "HONDAG-45251-TBA-A00"))
+      .limit(1),
+  ]);
+
+  if (oem04465 && p1Rows[0]) {
+    await db
+      .insert(oemMapping)
+      .values({
+        productId: p1Rows[0].id,
+        oemNumberId: oem04465.id,
+        matchConfidence: "khop_hoan_toan",
+      })
+      .onConflictDoNothing();
+    console.log(`  ✓ oem_mapping: 04465-BZ160 → SKU TOYG-0446502200`);
+  } else {
+    console.warn("  ⚠ oem_mapping: 04465-BZ160 hoặc product TOYG-0446502200 không tìm thấy");
+  }
+
+  if (oem45022 && p2Rows[0]) {
+    await db
+      .insert(oemMapping)
+      .values({
+        productId: p2Rows[0].id,
+        oemNumberId: oem45022.id,
+        matchConfidence: "khop_hoan_toan",
+      })
+      .onConflictDoNothing();
+    console.log(`  ✓ oem_mapping: 45022-S5A-J01 → SKU HONDAG-45251-TBA-A00`);
+  } else {
+    console.warn("  ⚠ oem_mapping: 45022-S5A-J01 hoặc product HONDAG-45251-TBA-A00 không tìm thấy");
+  }
 
   // ── Admin user seed ───────────────────────────────────────────────────────
   await seedAdmin(db);

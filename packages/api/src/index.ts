@@ -18,6 +18,7 @@ import {
   SearchRepository,
   OemRepository,
   AdminRepository,
+  LeadRepository,
 } from "autoparts-db/repositories";
 
 import { AuthService } from "./services/auth.service.js";
@@ -28,6 +29,8 @@ import { VehicleService } from "./services/vehicle.service.js";
 import { SearchService } from "./services/search.service.js";
 import { OemService } from "./services/oem.service.js";
 import { AdminProductService } from "./services/admin-product.service.js";
+import { LeadService } from "./services/lead.service.js";
+
 import { AuthController } from "./controllers/auth.controller.js";
 import { ProductController } from "./controllers/product.controller.js";
 import { CategoryController } from "./controllers/category.controller.js";
@@ -36,6 +39,8 @@ import { VehicleController } from "./controllers/vehicle.controller.js";
 import { SearchController } from "./controllers/search.controller.js";
 import { OemController } from "./controllers/oem.controller.js";
 import { AdminProductController } from "./controllers/admin-product.controller.js";
+import { LeadController } from "./controllers/lead.controller.js";
+
 import { createAdminRouter } from "./routes/admin.routes.js";
 import { createProductRouter } from "./routes/product.routes.js";
 import { createCategoryRouter } from "./routes/category.routes.js";
@@ -44,6 +49,8 @@ import { createVehicleRouter } from "./routes/vehicle.routes.js";
 import { createSearchRouter } from "./routes/search.routes.js";
 import { createOemRouter } from "./routes/oem.routes.js";
 import { createAdminProductRouter } from "./routes/admin-product.routes.js";
+import { createLeadRouter } from "./routes/lead.routes.js";
+
 import { requireAdmin } from "./middleware/require-admin.js";
 import { logger } from "./lib/logger.js";
 
@@ -59,6 +66,7 @@ const brandRepo = new BrandRepository(db);
 const vehicleRepo = new VehicleRepository(db);
 const searchRepo = new SearchRepository(db);
 const oemRepo = new OemRepository(db);
+const leadRepo = new LeadRepository(db);
 
 // Services
 const authService = new AuthService(adminRepo);
@@ -69,6 +77,11 @@ const vehicleService = new VehicleService(vehicleRepo);
 const searchService = new SearchService(searchRepo);
 const oemService = new OemService(oemRepo);
 const adminProductService = new AdminProductService(productRepo, oemRepo, vehicleRepo);
+const leadService = new LeadService(
+  leadRepo,
+  process.env.TELEGRAM_BOT_TOKEN,
+  process.env.TELEGRAM_CHAT_ID,
+);
 
 // Controllers
 const authController = new AuthController(authService);
@@ -79,6 +92,7 @@ const vehicleController = new VehicleController(vehicleService);
 const searchController = new SearchController(searchService);
 const oemController = new OemController(oemService);
 const adminProductController = new AdminProductController(adminProductService, productService);
+const leadController = new LeadController(leadService);
 
 // ---------------------------------------------------------------------------
 // Express app
@@ -92,7 +106,7 @@ app.use(express.json());
 
 // Health check
 app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok", service: "autoparts-api", version: "04B" });
+  res.json({ status: "ok", service: "autoparts-api", version: "06" });
 });
 
 // Routes — admin (login public, rest protected by requireAdmin middleware)
@@ -106,6 +120,9 @@ app.use("/api", createBrandRouter(brandController));
 app.use("/api", createVehicleRouter(vehicleController));
 app.use("/api", createSearchRouter(searchController));
 app.use("/api", createOemRouter(oemController));
+
+// Routes — lead (public — không cần auth)
+app.use("/api", createLeadRouter(leadController));
 
 // 404 fallback
 app.use((_req, res) => {

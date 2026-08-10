@@ -16,6 +16,8 @@ import type {
 } from '../../features/product/api/types';
 import styles from './HomePage.module.css';
 
+const API_BASE = 'http://localhost:3001/api';
+
 // ── Tiny inline sub-components ──────────────────────────────────────────────
 
 const FeaturedProductCard: React.FC<{ product: ProductListItem }> = ({ product }) => (
@@ -201,9 +203,21 @@ const VehicleBrandsSection: React.FC = () => {
 
 // ── Hero search ─────────────────────────────────────────────────────────────
 
+const FALLBACK_TAGS = ['Lọc dầu Toyota', 'Má phanh Honda', 'Bugi Mazda', 'Dây curoa Hyundai'];
+
 const HeroSearch: React.FC = () => {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
+  const [popularTags, setPopularTags] = useState<string[]>(FALLBACK_TAGS);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/search/pho-bien?limit=4`)
+      .then((r) => r.json())
+      .then((res: { data?: string[] }) => {
+        if (res.data && res.data.length > 0) setPopularTags(res.data);
+      })
+      .catch(() => {}); // giữ fallback nếu lỗi
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -211,8 +225,6 @@ const HeroSearch: React.FC = () => {
     if (!q) return;
     navigate(`/tim-kiem?q=${encodeURIComponent(q)}`);
   };
-
-  const quickTags = ['Lọc dầu Toyota', 'Má phanh Honda', 'Bugi Mazda', 'Dây curoa Hyundai'];
 
   return (
     <div className={styles.searchPlaceholder} aria-label="Khu vực tìm kiếm">
@@ -231,7 +243,7 @@ const HeroSearch: React.FC = () => {
       </form>
       <div className={styles.searchTags}>
         <span className={styles.tagLabel}>Tìm nhiều nhất:</span>
-        {quickTags.map((tag) => (
+        {popularTags.map((tag) => (
           <button
             key={tag}
             type="button"

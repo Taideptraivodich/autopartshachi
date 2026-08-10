@@ -1,4 +1,4 @@
-import { and, eq, ilike, or, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, or, inArray, sql } from "drizzle-orm";
 import { type Database } from "../db/index.js";
 import { product, productBrand, productImage } from "../db/schema/product.js";
 import { oemNumber, oemMapping } from "../db/schema/oem.js";
@@ -308,5 +308,16 @@ export class SearchRepository {
           lastSearchedAt: new Date(),
         },
       });
+  }
+  /**
+   * Lấy keyword phổ biến từ search_analytics, ORDER BY count DESC.
+   */
+  async getPopularKeywords(limit = 4): Promise<string[]> {
+    const rows = await this.db
+      .select({ keyword: searchAnalytics.keyword })
+      .from(searchAnalytics)
+      .orderBy(desc(searchAnalytics.count))
+      .limit(limit);
+    return rows.map((r) => r.keyword);
   }
 }
