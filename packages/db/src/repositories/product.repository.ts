@@ -1,7 +1,15 @@
 import { and, asc, count, desc, eq, inArray, like, or, SQL } from "drizzle-orm";
 import { type Database } from "../db/index.js";
-import { product, productBrand, productCategoryMap, productImage } from "../db/schema/product.js";
+import {
+  product,
+  productBrand,
+  productCategory,
+  productCategoryMap,
+  productImage,
+} from "../db/schema/product.js";
 import { compatibility } from "../db/schema/compatibility.js";
+import { oemMapping, oemNumber } from "../db/schema/oem.js";
+import { vehicleBrand, vehicleGeneration, vehicleModel } from "../db/schema/vehicle.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -21,6 +29,26 @@ export type ProductSummary = Product & {
 export type ProductDetail = Product & {
   brand: ProductBrand | null;
   images: ProductImage[];
+  categories: { id: number; name: string; slug: string }[];
+  oemCodes: {
+    id: number;
+    oemNumber: string;
+    status: string;
+    matchConfidence: string;
+    issuingVehicleBrandId: number | null;
+  }[];
+  compatibility: {
+    compatId: number;
+    installationPosition: string;
+    notes: string | null;
+    brandName: string;
+    brandSlug: string;
+    modelName: string;
+    modelSlug: string;
+    generationName: string;
+    yearStart: number;
+    yearEnd: number | null;
+  }[];
 };
 
 // ---------------------------------------------------------------------------
@@ -268,7 +296,7 @@ export class ProductRepository {
     const p = rows[0];
     if (p === undefined) return undefined;
 
-    const [brands, images] = await Promise.all([
+    const [brands, images, categories, oemCodes, compatRows] = await Promise.all([
       this.db
         .select()
         .from(productBrand)
@@ -279,12 +307,56 @@ export class ProductRepository {
         .from(productImage)
         .where(eq(productImage.productId, p.id))
         .orderBy(asc(productImage.displayOrder)),
+      this.db
+        .select({
+          id: productCategory.id,
+          name: productCategory.name,
+          slug: productCategory.slug,
+        })
+        .from(productCategoryMap)
+        .innerJoin(productCategory, eq(productCategoryMap.categoryId, productCategory.id))
+        .where(eq(productCategoryMap.productId, p.id)),
+      this.db
+        .select({
+          id: oemMapping.id,
+          oemNumber: oemNumber.oemNumber,
+          status: oemNumber.status,
+          matchConfidence: oemMapping.matchConfidence,
+          issuingVehicleBrandId: oemNumber.issuingVehicleBrandId,
+        })
+        .from(oemMapping)
+        .innerJoin(oemNumber, eq(oemMapping.oemNumberId, oemNumber.id))
+        .where(eq(oemMapping.productId, p.id)),
+      this.db
+        .select({
+          compatId: compatibility.id,
+          installationPosition: compatibility.installationPosition,
+          notes: compatibility.notes,
+          brandName: vehicleBrand.name,
+          brandSlug: vehicleBrand.slug,
+          modelName: vehicleModel.name,
+          modelSlug: vehicleModel.slug,
+          generationName: vehicleGeneration.name,
+          yearStart: vehicleGeneration.yearStart,
+          yearEnd: vehicleGeneration.yearEnd,
+        })
+        .from(compatibility)
+        .innerJoin(
+          vehicleGeneration,
+          eq(compatibility.vehicleGenerationId, vehicleGeneration.id),
+        )
+        .innerJoin(vehicleModel, eq(vehicleGeneration.vehicleModelId, vehicleModel.id))
+        .innerJoin(vehicleBrand, eq(vehicleModel.vehicleBrandId, vehicleBrand.id))
+        .where(eq(compatibility.productId, p.id)),
     ]);
 
     const result: ProductDetail = {
       ...p,
       brand: brands[0] ?? null,
       images,
+      categories,
+      oemCodes,
+      compatibility: compatRows,
     };
 
     return result;
