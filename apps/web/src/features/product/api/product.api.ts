@@ -12,6 +12,7 @@ import type {
   OemResult,
   SearchResult,
   SuggestionItem,
+  ProductFilterParams,
 } from "./types";
 
 const BASE = "http://localhost:3001/api";
@@ -34,9 +35,25 @@ async function apiFetch<T>(path: string): Promise<T> {
 export async function fetchProductList(
   page = 1,
   pageSize = 24,
+  filters: Omit<ProductFilterParams, "page"> = {},
 ): Promise<PaginatedResponse<ProductListItem>> {
-  return apiFetch<PaginatedResponse<ProductListItem>>(
-    `/san-pham?page=${page}&pageSize=${pageSize}`,
+  const params = new URLSearchParams();
+  params.set("page", String(page));
+  params.set("pageSize", String(pageSize));
+  if (filters.brandId) params.set("brandId", String(filters.brandId));
+  if (filters.categoryId) params.set("categoryId", String(filters.categoryId));
+  if (filters.status) params.set("status", filters.status);
+  if (filters.sortBy) params.set("sortBy", filters.sortBy);
+  if (filters.sortDir) params.set("sortDir", filters.sortDir);
+  return apiFetch<PaginatedResponse<ProductListItem>>(`/san-pham?${params}`);
+}
+
+export async function fetchRelatedProducts(
+  slug: string,
+  limit = 8,
+): Promise<{ data: ProductListItem[] }> {
+  return apiFetch<{ data: ProductListItem[] }>(
+    `/san-pham/${encodeURIComponent(slug)}/lien-quan?limit=${limit}`,
   );
 }
 

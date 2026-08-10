@@ -47,12 +47,27 @@ export class ProductController {
           ? (rawStatus as "con_hang" | "het_hang" | "ngung_kinh_doanh")
           : undefined;
 
+      const VALID_SORT_BY = ["name", "createdAt"] as const;
+      const VALID_SORT_DIR = ["asc", "desc"] as const;
+
+      const rawSortBy = String(req.query.sortBy ?? "createdAt");
+      const sortBy = VALID_SORT_BY.includes(rawSortBy as "name" | "createdAt")
+        ? (rawSortBy as "name" | "createdAt")
+        : "createdAt";
+
+      const rawSortDir = String(req.query.sortDir ?? "desc");
+      const sortDir = VALID_SORT_DIR.includes(rawSortDir as "asc" | "desc")
+        ? (rawSortDir as "asc" | "desc")
+        : "desc";
+
       const result = await this.productService.getProductList({
         page,
         pageSize,
         brandId,
         categoryId,
         status,
+        sortBy,
+        sortDir,
       });
 
       res.json({

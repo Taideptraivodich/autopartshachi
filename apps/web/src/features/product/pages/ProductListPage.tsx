@@ -3,8 +3,10 @@ import MetaTags from '../../../components/ui/MetaTags';
 import Breadcrumb from '../../../components/ui/Breadcrumb';
 import { Pagination, SkeletonCard } from '../../../components/ui';
 import ProductGrid from '../components/ProductGrid';
-import { fetchProductList } from '../api/product.api';
-import type { ProductListItem } from '../api/types';
+import FilterSidebar from '../components/FilterSidebar';
+import SortBar from '../components/SortBar';
+import { fetchProductList, fetchAllBrands, fetchAllCategories } from '../api/product.api';
+import type { ProductListItem, BrandListItem, CategoryListItem, ProductFilterParams } from '../api/types';
 import styles from './ProductListPage.module.css';
 
 const PAGE_SIZE = 24;
@@ -16,12 +18,27 @@ const ProductListPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [filters, setFilters] = useState<ProductFilterParams>({
+    sortBy: 'createdAt',
+    sortDir: 'desc',
+  });
+  const [brands, setBrands] = useState<BrandListItem[]>([]);
+  const [categories, setCategories] = useState<CategoryListItem[]>([]);
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+
+  // Load brands + categories một lần
+  useEffect(() => {
+    fetchAllBrands().then((res) => setBrands(res.data)).catch(() => {});
+    fetchAllCategories().then((res) => setCategories(res.data)).catch(() => {});
+  }, []);
+
+  // Fetch sản phẩm khi filter hoặc page thay đổi
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
 
-    fetchProductList(page, PAGE_SIZE)
+    fetchProductList(page, PAGE_SIZE, filters)
       .then((res) => {
         if (cancelled) return;
         setItems(res.data);
@@ -36,7 +53,17 @@ const ProductListPage: React.FC = () => {
       });
 
     return () => { cancelled = true; };
-  }, [page]);
+  }, [filters, page]);
+
+  const handleFilterChange = (newFields: ProductFilterParams) => {
+    setFilters((f) => ({ ...f, ...newFields }));
+    setPage(1);
+  };
+
+  const handleReset = () => {
+    setFilters({ sortBy: 'createdAt', sortDir: 'desc' });
+    setPage(1);
+  };
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
@@ -61,41 +88,63 @@ const ProductListPage: React.FC = () => {
             />
           </div>
 
-          <div className={styles.header}>
-            <h1 className={styles.title}>Sản phẩm phụ tùng</h1>
-            {!loading && !error && (
-              <span className={styles.count}>{total} sản phẩm</span>
-            )}
-          </div>
+          <h1 className={styles.title}>Sản phẩm phụ tùng</h1>
 
-          {error ? (
-            <div className={styles.errorState}>
-              <div className={styles.errorIcon}>⚠️</div>
-              <p><strong>Không thể tải danh sách sản phẩm.</strong></p>
-              <p>{error}</p>
-            </div>
-          ) : loading ? (
-            <div className={styles.loadingGrid}>
-              {Array.from({ length: 8 }).map((_, i) => (
-                <SkeletonCard key={i} />
-              ))}
-            </div>
-          ) : (
-            <>
-              <ProductGrid products={items} />
+          <div className={styles.layout}>
+            {/* Sidebar */}
+            <aside
+              className={`${styles.sidebarWrap} ${mobileFilterOpen ? styles.mobileOpen : ''}`}
+            >
+              <FilterSidebar
+                brands={brands}
+                categories={categories}
+                filters={filters}
+                onChange={handleFilterChange}
+                onReset={handleReset}
+                loading={loading}
+              />
+            </aside>
 
-              {total > PAGE_SIZE && (
-                <div className={styles.pagination}>
-                  <Pagination
-                    page={page}
-                    pageSize={PAGE_SIZE}
-                    total={total}
-                    onPageChange={handlePageChange}
-                  />
+            {/* Main content */}
+            <div className={styles.mainContent}>
+              <SortBar
+                total={total}
+                sortBy={filters.sortBy ?? 'createdAt'}
+                sortDir={filters.sortDir ?? 'desc'}
+                onChange={(sortBy, sortDir) => handleFilterChange({ sortBy, sortDir })}
+                onMobileFilterToggle={() => setMobileFilterOpen((o) => !o)}
+              />
+
+              {error ? (
+                <div className={styles.errorState}>
+                  <div className={styles.errorIcon}>⚠️</div>
+                  <p><strong>Không thể tải danh sách sản phẩm.</strong></p>
+                  <p>{error}</p>
                 </div>
+              ) : loading ? (
+                <div className={styles.loadingGrid}>
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <SkeletonCard key={i} />
+                  ))}
+                </div>
+              ) : (
+                <>
+                  <ProductGrid products={items} />
+
+                  {total > PAGE_SIZE && (
+                    <div className={styles.pagination}>
+                      <Pagination
+                        page={page}
+                        pageSize={PAGE_SIZE}
+                        total={total}
+                        onPageChange={handlePageChange}
+                      />
+                    </div>
+                  )}
+                </>
               )}
-            </>
-          )}
+            </div>
+          </div>
         </div>
       </div>
     </>

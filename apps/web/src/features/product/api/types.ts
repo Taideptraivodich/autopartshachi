@@ -1,3 +1,14 @@
+// ─── Filter / sort params ──────────────────────────────────────────────────────
+
+export interface ProductFilterParams {
+  brandId?: number;
+  categoryId?: number;
+  status?: "con_hang" | "het_hang" | "ngung_kinh_doanh" | "";
+  sortBy?: "createdAt" | "name";
+  sortDir?: "asc" | "desc";
+  page?: number;
+}
+
 // ─── Product types (mirror API response shapes) ────────────────────────────────
 
 export interface ProductBrandSummary {

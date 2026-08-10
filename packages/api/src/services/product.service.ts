@@ -44,6 +44,8 @@ export interface GetProductListParams {
   brandId?: number;
   categoryId?: number;
   status?: "con_hang" | "het_hang" | "ngung_kinh_doanh";
+  sortBy?: "name" | "createdAt";
+  sortDir?: "asc" | "desc";
 }
 
 /** Chi tiết đầy đủ 1 sản phẩm */
@@ -152,8 +154,8 @@ export class ProductService {
         brandId,
         categoryId,
         status,
-        sortBy: "createdAt",
-        sortDir: "desc",
+        sortBy: params.sortBy ?? "createdAt",
+        sortDir: params.sortDir ?? "desc",
       });
 
     return {

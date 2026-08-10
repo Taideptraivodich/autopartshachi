@@ -7,6 +7,7 @@ import ProductGallery from '../components/ProductGallery';
 import OEMBlock from '../components/OEMBlock';
 import CompatibilityBlock from '../components/CompatibilityBlock';
 import { fetchProductBySlug } from '../api/product.api';
+import RelatedProducts from '../components/RelatedProducts';
 import type { ProductDetail } from '../api/types';
 import styles from './ProductDetailPage.module.css';
 
@@ -199,6 +200,8 @@ const ProductDetailPage: React.FC = () => {
             <OEMBlock codes={product.oemCodes} />
             <CompatibilityBlock entries={product.compatibility} />
           </div>
+
+          <RelatedProducts currentSlug={product.slug} />
         </div>
       </div>
     </>

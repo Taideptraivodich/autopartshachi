@@ -1,0 +1,70 @@
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+}
+
+.section {
+  margin-bottom: var(--space-6);
+}
+
+.sectionTitle {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-3);
+  margin-top: 0;
+}
+
+.radioItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+  cursor: pointer;
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+}
+
+.radioItem input {
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.toggleBtn {
+  background: none;
+  border: none;
+  padding: var(--space-1) 0;
+  font-size: var(--text-sm);
+  color: var(--color-primary);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.toggleBtn:hover {
+  opacity: 0.8;
+}
+
+.resetBtn {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.resetBtn:hover {
+  background: var(--color-bg-subtle);
+}
+
+/* Mobile: sidebar ẩn, hiện qua drawer */
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
+    width: 100%;
+  }
+}
