@@ -2,13 +2,13 @@
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 0;
-  padding: var(--space-7);
+  padding: var(--space-8);
 }
 
 .widgetTitle {
   font-size: var(--text-base);
   font-weight: var(--font-semibold);
-  margin: 0 0 var(--space-6);
+  margin: 0 0 var(--space-7);
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -44,18 +44,18 @@
 .dropdownRow {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-4);
+  gap: var(--space-6);
 }
 
 .dropdownRow > * { min-width: 0; }
 
 .dropdownRow label,
 .dropdownRow select {
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
 }
 
 .ctaRow {
-  margin-top: var(--space-6);
+  margin-top: var(--space-7);
   display: flex;
   align-items: center;
   gap: var(--space-4);
@@ -123,5 +123,6 @@
 
 @media (max-width: 720px) {
   .widget { padding: var(--space-6); }
-  .dropdownRow { grid-template-columns: 1fr; gap: var(--space-4); }
+  .widgetTitle { margin-bottom: var(--space-6); }
+  .dropdownRow { grid-template-columns: 1fr; gap: var(--space-5); }
 }
