@@ -2,13 +2,13 @@
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 0;
-  padding: var(--space-5);
+  padding: var(--space-7);
 }
 
 .widgetTitle {
   font-size: var(--text-base);
   font-weight: var(--font-semibold);
-  margin: 0 0 var(--space-4);
+  margin: 0 0 var(--space-6);
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -16,8 +16,8 @@
 }
 
 .vehicleMark {
-  width: 24px;
-  height: 16px;
+  width: 25px;
+  height: 17px;
   display: inline-block;
   position: relative;
   border: 1.5px solid currentColor;
@@ -44,16 +44,21 @@
 .dropdownRow {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
 
 .dropdownRow > * { min-width: 0; }
 
+.dropdownRow label,
+.dropdownRow select {
+  font-size: var(--text-sm);
+}
+
 .ctaRow {
-  margin-top: var(--space-4);
+  margin-top: var(--space-6);
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-4);
   flex-wrap: wrap;
 }
 
@@ -61,13 +66,14 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-4);
+  min-height: 44px;
+  padding: 0 var(--space-5);
   background: var(--color-primary);
   color: #fff;
   border-radius: 0;
   text-decoration: none;
   font-size: var(--text-sm);
-  font-weight: var(--font-medium);
+  font-weight: var(--font-semibold);
   transition: opacity 0.15s;
 }
 
@@ -78,7 +84,7 @@
 
 .ctaHint {
   font-size: var(--text-sm);
-  color: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
 }
 
 .compact {
@@ -97,7 +103,7 @@
 }
 
 .compactLabel {
-  max-width: 160px;
+  max-width: 180px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -108,7 +114,7 @@
   border: none;
   cursor: pointer;
   color: var(--color-text-tertiary);
-  padding: 2px;
+  padding: 4px;
   line-height: 1;
   font-size: var(--text-sm);
 }
@@ -116,5 +122,6 @@
 .clearBtn:hover { color: var(--color-text-primary); }
 
 @media (max-width: 720px) {
-  .dropdownRow { grid-template-columns: 1fr; }
+  .widget { padding: var(--space-6); }
+  .dropdownRow { grid-template-columns: 1fr; gap: var(--space-4); }
 }
