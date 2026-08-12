@@ -43,6 +43,13 @@
       "when": 1786200000000,
       "tag": "0005_visibility_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1786300000000,
+      "tag": "0006_brand_logo",
+      "breakpoints": true
     }
   ]
 }

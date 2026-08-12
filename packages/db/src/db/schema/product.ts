@@ -27,6 +27,7 @@ export const productBrand = pgTable(
     id: bigint("id", { mode: "number" }).generatedAlwaysAsIdentity().primaryKey(),
     name: text("name").notNull(),
     slug: text("slug").notNull(),
+    logoUrl: text("logo_url"),
     isActive: boolean("is_active").notNull().default(true),
     ...timestamps(),
   },

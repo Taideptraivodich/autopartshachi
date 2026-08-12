@@ -34,13 +34,13 @@ export function createAdminBrandRouter(brandService: BrandService): Router {
   // POST /api/admin/thuong-hieu
   r.post("/", async (req: Request, res: Response) => {
     try {
-      const { name, isActive } = req.body as { name?: string; isActive?: boolean };
+      const { name, isActive, logoUrl } = req.body as { name?: string; isActive?: boolean; logoUrl?: string | null };
       if (!name?.trim()) {
         res.status(400).json({ error: "name is required" });
         return;
       }
       const slug = slugify(name.trim());
-      const brand = await brandService.adminCreateBrand({ name: name.trim(), slug, isActive });
+      const brand = await brandService.adminCreateBrand({ name: name.trim(), slug, isActive, logoUrl });
       res.status(201).json({ data: brand });
     } catch (err) {
       logger.error("adminCreateBrand error", err);
@@ -53,10 +53,11 @@ export function createAdminBrandRouter(brandService: BrandService): Router {
     try {
       const id = parseInt(String(req.params.id), 10);
       if (!id) { res.status(400).json({ error: "Invalid id" }); return; }
-      const { name, isActive } = req.body as { name?: string; isActive?: boolean };
-      const updates: { name?: string; slug?: string; isActive?: boolean } = {};
+      const { name, isActive, logoUrl } = req.body as { name?: string; isActive?: boolean; logoUrl?: string | null };
+      const updates: { name?: string; slug?: string; logoUrl?: string | null; isActive?: boolean } = {};
       if (name?.trim()) { updates.name = name.trim(); updates.slug = slugify(name.trim()); }
       if (typeof isActive === "boolean") updates.isActive = isActive;
+      if (logoUrl !== undefined) updates.logoUrl = logoUrl;
       const brand = await brandService.adminUpdateBrand(id, updates);
       if (!brand) { res.status(404).json({ error: "Not found" }); return; }
       res.json({ data: brand });

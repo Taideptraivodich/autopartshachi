@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { SITE_CONFIG, ROUTES } from '../../constants/site';
+import { useSiteSettings } from '../../context/SiteSettingsContext';
 import { QUICK_LINKS } from '../../constants/navigation';
 import styles from './Footer.module.css';
 
@@ -11,7 +12,9 @@ const SUPPORT_LINKS = [
   { label: 'Tra cứu đơn hàng', href: '/tra-cuu-don-hang' },
 ];
 
-const Footer: React.FC = () => (
+const Footer: React.FC = () => {
+  const siteSettings = useSiteSettings();
+  return (
   <footer className={styles.footer} role="contentinfo">
     <div className={`container ${styles.inner}`}>
       {/* Brand */}
@@ -24,7 +27,7 @@ const Footer: React.FC = () => (
         <div className={styles.contactInfo}>
           <p className={styles.contactItem}>
             <span aria-hidden="true">📞</span>
-            <a href={`tel:${SITE_CONFIG.phone}`}>{SITE_CONFIG.phone}</a>
+            <a href={`tel:${siteSettings.phone}`}>{siteSettings.phone}</a>
           </p>
           <p className={styles.contactItem}>
             <span aria-hidden="true">✉</span>
@@ -36,7 +39,7 @@ const Footer: React.FC = () => (
           </p>
           <p className={styles.contactItem}>
             <span aria-hidden="true">🕐</span>
-            <span>{SITE_CONFIG.workingHours}</span>
+            <span>{siteSettings.workingHours}</span>
           </p>
         </div>
       </div>
@@ -85,6 +88,7 @@ const Footer: React.FC = () => (
       </div>
     </div>
   </footer>
-);
+  );
+};
 
 export default Footer;

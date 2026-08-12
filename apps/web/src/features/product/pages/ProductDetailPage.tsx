@@ -10,19 +10,17 @@ import { fetchProductBySlug } from '../api/product.api';
 import RelatedProducts from '../components/RelatedProducts';
 import type { ProductDetail } from '../api/types';
 import { SITE_CONFIG } from '../../../constants/site';
+import { useSiteSettings } from '../../../context/SiteSettingsContext';
 import styles from './ProductDetailPage.module.css';
 
-// SĐT tư vấn — thay bằng số thực của Hachi
-const HACHI_PHONE = '+84901234567';
-
-function buildZaloOrderLink(product: ProductDetail, quantity: number): { url: string; message: string } {
+function buildZaloOrderLink(product: ProductDetail, quantity: number, zaloPhone: string): { url: string; message: string } {
   const message =
     `Tôi muốn hỏi về sản phẩm: ${product.name} (SKU: ${product.sku})\n` +
     `Số lượng: ${quantity}\n` +
     `---\n` +
     `(Vui lòng cho biết số lượng và địa chỉ nhận hàng để được báo giá)`;
-  const zaloPhone = SITE_CONFIG.zaloPhone.replace(/\D/g, '');
-  const url = `https://zalo.me/${zaloPhone}?text=${encodeURIComponent(message)}`;
+  const phone = zaloPhone.replace(/\D/g, '');
+  const url = `https://zalo.me/${phone}?text=${encodeURIComponent(message)}`;
   return { url, message };
 }
 
@@ -33,6 +31,7 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const ProductDetailPage: React.FC = () => {
+  const siteSettings = useSiteSettings();
   const { slug } = useParams<{ slug: string }>();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -241,7 +240,7 @@ const ProductDetailPage: React.FC = () => {
               {/* CTA block */}
               <div className={styles.ctaBlock}>
                 <a
-                  href={`tel:${HACHI_PHONE}`}
+                  href={`tel:${siteSettings.phone}`}
                   className={styles.ctaCallBtn}
                 >
                   📞 Gọi ngay tư vấn
@@ -249,7 +248,7 @@ const ProductDetailPage: React.FC = () => {
                 <button
                   className={styles.ctaContactBtn}
                   onClick={async () => {
-                    const { url, message } = buildZaloOrderLink(product, quantity);
+                    const { url, message } = buildZaloOrderLink(product, quantity, siteSettings.zaloPhone);
                     try {
                       await navigator.clipboard.writeText(message);
                       setCopiedHint(true);
@@ -271,7 +270,7 @@ const ProductDetailPage: React.FC = () => {
 
           {/* OEM + Compatibility sections */}
           <div className={styles.sections}>
-            {SITE_CONFIG.showOem && <OEMBlock codes={product.oemCodes} />}
+            {siteSettings.showOem && <OEMBlock codes={product.oemCodes} />}
             <CompatibilityBlock entries={product.compatibility} />
           </div>
 

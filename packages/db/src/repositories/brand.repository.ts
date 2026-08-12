@@ -11,6 +11,7 @@ export type Brand = typeof productBrand.$inferSelect;
 export interface BrandInput {
   name: string;
   slug: string;
+  logoUrl?: string | null;
   isActive?: boolean;
 }
 
@@ -60,7 +61,7 @@ export class BrandRepository {
   async create(input: BrandInput): Promise<Brand> {
     const rows = await this.db
       .insert(productBrand)
-      .values({ name: input.name, slug: input.slug, isActive: input.isActive ?? true })
+      .values({ name: input.name, slug: input.slug, logoUrl: input.logoUrl ?? null, isActive: input.isActive ?? true })
       .returning();
     return rows[0]!;
   }

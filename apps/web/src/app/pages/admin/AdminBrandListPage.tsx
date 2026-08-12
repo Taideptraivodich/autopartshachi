@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAdminAuth } from "../../../features/admin/context/AdminAuthContext";
 import { Button, Input } from "../../../components/ui";
@@ -7,10 +7,115 @@ import {
   createAdminBrand,
   updateAdminBrand,
   deleteAdminBrand,
+  uploadImage,
   type AdminBrand,
 } from "../../../features/admin/api/admin-catalog.api";
 
-type FormState = { name: string; isActive: boolean };
+// URL gốc static server (Express) — ảnh upload ở /uploads/
+const STATIC_BASE = "http://localhost:3001";
+
+function resolveUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (url.startsWith("/uploads/")) return `${STATIC_BASE}${url}`;
+  return url;
+}
+
+// ─── ImageUploadField ────────────────────────────────────────────────────────
+
+interface ImageUploadFieldProps {
+  value: string | null;
+  onChange: (url: string | null) => void;
+  label?: string;
+}
+
+const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
+  value,
+  onChange,
+  label = "Ảnh logo",
+}) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadError(null);
+    setUploading(true);
+    try {
+      const url = await uploadImage(file);
+      onChange(url);
+    } catch (err) {
+      setUploadError((err as Error).message ?? "Upload thất bại");
+    } finally {
+      setUploading(false);
+      // reset input để có thể chọn lại cùng file
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  };
+
+  const resolved = resolveUrl(value);
+
+  return (
+    <div>
+      <label style={{ fontSize: "0.85rem", color: "#374151", display: "block", marginBottom: 6 }}>
+        {label}
+      </label>
+
+      {resolved && (
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+          <img
+            src={resolved}
+            alt="logo"
+            style={{
+              width: 56, height: 56, objectFit: "contain",
+              border: "1px solid #e5e7eb", borderRadius: 6, background: "#f9fafb",
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => onChange(null)}
+            style={{ fontSize: "0.78rem", color: "#b91c1c", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+          >
+            Xóa ảnh
+          </button>
+        </div>
+      )}
+
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <button
+          type="button"
+          disabled={uploading}
+          onClick={() => inputRef.current?.click()}
+          style={{
+            fontSize: "0.82rem", padding: "5px 12px", borderRadius: 6,
+            border: "1px solid #d1d5db", background: uploading ? "#f3f4f6" : "#fff",
+            cursor: uploading ? "not-allowed" : "pointer", color: "#374151",
+          }}
+        >
+          {uploading ? "Đang tải lên…" : resolved ? "Đổi ảnh" : "Chọn ảnh từ máy"}
+        </button>
+        <span style={{ fontSize: "0.75rem", color: "#9ca3af" }}>JPEG, PNG, WebP — tối đa 5MB</span>
+      </div>
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        style={{ display: "none" }}
+        onChange={handleFile}
+      />
+
+      {uploadError && (
+        <p style={{ color: "#b91c1c", fontSize: "0.8rem", marginTop: 4 }}>{uploadError}</p>
+      )}
+    </div>
+  );
+};
+
+// ─── Main Page ───────────────────────────────────────────────────────────────
+
+type FormState = { name: string; logoUrl: string | null; isActive: boolean };
 
 const AdminBrandListPage: React.FC = () => {
   const { logout } = useAdminAuth();
@@ -19,10 +124,9 @@ const AdminBrandListPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Modal state
-  const [editing, setEditing] = useState<AdminBrand | null>(null); // null = creating new
+  const [editing, setEditing] = useState<AdminBrand | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState<FormState>({ name: "", isActive: true });
+  const [form, setForm] = useState<FormState>({ name: "", logoUrl: null, isActive: true });
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
@@ -42,13 +146,13 @@ const AdminBrandListPage: React.FC = () => {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: "", isActive: true });
+    setForm({ name: "", logoUrl: null, isActive: true });
     setShowModal(true);
   };
 
   const openEdit = (brand: AdminBrand) => {
     setEditing(brand);
-    setForm({ name: brand.name, isActive: brand.isActive });
+    setForm({ name: brand.name, logoUrl: brand.logoUrl, isActive: brand.isActive });
     setShowModal(true);
   };
 
@@ -57,9 +161,13 @@ const AdminBrandListPage: React.FC = () => {
     setSaving(true);
     try {
       if (editing) {
-        await updateAdminBrand(editing.id, { name: form.name.trim(), isActive: form.isActive });
+        await updateAdminBrand(editing.id, {
+          name: form.name.trim(),
+          logoUrl: form.logoUrl,
+          isActive: form.isActive,
+        });
       } else {
-        await createAdminBrand(form.name.trim(), form.isActive);
+        await createAdminBrand(form.name.trim(), form.isActive, form.logoUrl);
       }
       setShowModal(false);
       await load();
@@ -105,6 +213,7 @@ const AdminBrandListPage: React.FC = () => {
               <thead>
                 <tr>
                   <th style={S.th}>ID</th>
+                  <th style={S.th}>Logo</th>
                   <th style={S.th}>Tên</th>
                   <th style={S.th}>Slug</th>
                   <th style={S.th}>Trạng thái</th>
@@ -113,11 +222,22 @@ const AdminBrandListPage: React.FC = () => {
               </thead>
               <tbody>
                 {items.length === 0 && (
-                  <tr><td colSpan={5} style={S.tdEmpty}>Chưa có thương hiệu nào.</td></tr>
+                  <tr><td colSpan={6} style={S.tdEmpty}>Chưa có thương hiệu nào.</td></tr>
                 )}
                 {items.map((b) => (
                   <tr key={b.id}>
                     <td style={S.td}>{b.id}</td>
+                    <td style={S.td}>
+                      {resolveUrl(b.logoUrl) ? (
+                        <img
+                          src={resolveUrl(b.logoUrl)!}
+                          alt={b.name}
+                          style={{ width: 36, height: 36, objectFit: "contain", display: "block" }}
+                        />
+                      ) : (
+                        <span style={{ color: "#d1d5db", fontSize: "0.8rem" }}>—</span>
+                      )}
+                    </td>
                     <td style={S.td}>{b.name}</td>
                     <td style={S.td}><code>{b.slug}</code></td>
                     <td style={S.td}>
@@ -144,26 +264,34 @@ const AdminBrandListPage: React.FC = () => {
         )}
       </main>
 
-      {/* ── Modal create / edit ── */}
       {showModal && (
         <div style={S.backdrop} onClick={() => setShowModal(false)}>
           <div style={S.modal} onClick={(e) => e.stopPropagation()}>
             <h3 style={{ marginTop: 0 }}>{editing ? "Sửa thương hiệu" : "Thêm thương hiệu"}</h3>
+
             <Input
               label="Tên thương hiệu *"
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              placeholder="Ví dụ: Toyota"
+              placeholder="Ví dụ: Bosch, Denso…"
               autoFocus
             />
+
+            <ImageUploadField
+              label="Logo thương hiệu"
+              value={form.logoUrl}
+              onChange={(url) => setForm((f) => ({ ...f, logoUrl: url }))}
+            />
+
             <label style={S.checkLabel}>
               <input
                 type="checkbox"
                 checked={form.isActive}
                 onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
               />
-              {" "}Hiện thị (active)
+              {" "}Hiển thị (active)
             </label>
+
             <div style={S.modalActions}>
               <Button variant="ghost" onClick={() => setShowModal(false)}>Hủy</Button>
               <Button variant="primary" loading={saving} onClick={handleSave}>

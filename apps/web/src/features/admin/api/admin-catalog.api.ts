@@ -11,6 +11,7 @@ export interface AdminBrand {
   id: number;
   name: string;
   slug: string;
+  logoUrl: string | null;
   isActive: boolean;
 }
 
@@ -66,17 +67,18 @@ export async function listAdminBrands(): Promise<AdminBrand[]> {
 export async function createAdminBrand(
   name: string,
   isActive = true,
+  logoUrl?: string | null,
 ): Promise<AdminBrand> {
   const res = await adminApiFetch<{ data: AdminBrand }>("/admin/thuong-hieu", {
     method: "POST",
-    body: JSON.stringify({ name, isActive }),
+    body: JSON.stringify({ name, isActive, logoUrl: logoUrl ?? null }),
   });
   return res.data;
 }
 
 export async function updateAdminBrand(
   id: number,
-  payload: { name?: string; isActive?: boolean },
+  payload: { name?: string; logoUrl?: string | null; isActive?: boolean },
 ): Promise<AdminBrand> {
   const res = await adminApiFetch<{ data: AdminBrand }>(`/admin/thuong-hieu/${id}`, {
     method: "PUT",

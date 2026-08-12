@@ -74,6 +74,25 @@ export interface ProductDetailResult {
     isThumbnail: boolean;
     displayOrder: number;
   }[];
+  categories: { id: number; name: string; slug: string }[];
+  oemCodes: {
+    id: number;
+    code: string;
+    status: string;
+    matchConfidence: string;
+    issuingBrand: string | null;
+  }[];
+  compatibility: {
+    brandName: string;
+    brandSlug: string;
+    modelName: string;
+    modelSlug: string;
+    generationName: string;
+    yearStart: number;
+    yearEnd: number | null;
+    installationPosition: string;
+    notes: string | null;
+  }[];
 }
 
 // ---------------------------------------------------------------------------
@@ -132,6 +151,25 @@ function mapDetailToResult(p: ProductDetail): ProductDetailResult {
         isThumbnail: img.isThumbnail,
         displayOrder: img.displayOrder,
       })),
+    categories: p.categories ?? [],
+    oemCodes: (p.oemCodes ?? []).map((o) => ({
+      id: o.id,
+      code: o.oemNumber,
+      status: o.status,
+      matchConfidence: o.matchConfidence,
+      issuingBrand: null,
+    })),
+    compatibility: (p.compatibility ?? []).map((c) => ({
+      brandName: c.brandName,
+      brandSlug: c.brandSlug,
+      modelName: c.modelName,
+      modelSlug: c.modelSlug,
+      generationName: c.generationName,
+      yearStart: c.yearStart,
+      yearEnd: c.yearEnd,
+      installationPosition: c.installationPosition,
+      notes: c.notes,
+    })),
   };
 }
 

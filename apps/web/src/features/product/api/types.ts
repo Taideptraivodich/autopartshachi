@@ -117,6 +117,7 @@ export interface BrandListItem {
   id: number;
   name: string;
   slug: string;
+  logoUrl: string | null;
 }
 export interface BrandDetail extends BrandListItem {}
 

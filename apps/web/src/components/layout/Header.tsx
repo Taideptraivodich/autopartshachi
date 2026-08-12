@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, NavLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { NAV_ITEMS } from '../../constants/navigation';
 import { SITE_CONFIG } from '../../constants/site';
+import { useSiteSettings } from '../../context/SiteSettingsContext';
 import styles from './Header.module.css';
 import SearchDropdown from '../../features/search/components/SearchDropdown';
 import { useSearchHistory } from '../../features/search/hooks/useSearchHistory';
@@ -9,6 +10,7 @@ import { fetchSearchSuggestions } from '../../features/product/api/product.api';
 import type { SuggestionItem } from '../../features/product/api/types';
 
 const Header: React.FC = () => {
+  const siteSettings = useSiteSettings();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -195,9 +197,9 @@ const Header: React.FC = () => {
             <span aria-hidden="true">🔍</span>
             <span className={styles.searchHint}>Tìm phụ tùng...</span>
           </button>
-          <a href={`tel:${SITE_CONFIG.phone}`} className={styles.phoneBtn} aria-label={`Gọi ${SITE_CONFIG.phone}`}>
+          <a href={`tel:${siteSettings.phone}`} className={styles.phoneBtn} aria-label={`Gọi ${siteSettings.phone}`}>
             <span aria-hidden="true">📞</span>
-            <span className={styles.phoneText}>{SITE_CONFIG.phone}</span>
+            <span className={styles.phoneText}>{siteSettings.phone}</span>
           </a>
         </div>
 
@@ -327,8 +329,8 @@ const Header: React.FC = () => {
             ))}
           </ul>
           <div className={styles.mobileCta}>
-            <a href={`tel:${SITE_CONFIG.phone}`} className={styles.mobilePhone}>
-              📞 {SITE_CONFIG.phone}
+            <a href={`tel:${siteSettings.phone}`} className={styles.mobilePhone}>
+              📞 {siteSettings.phone}
             </a>
           </div>
         </nav>

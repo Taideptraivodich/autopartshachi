@@ -10,6 +10,7 @@ export interface BrandItem {
   id: number;
   name: string;
   slug: string;
+  logoUrl: string | null;
 }
 
 export interface BrandDetail extends BrandItem {
@@ -28,7 +29,7 @@ export interface BrandProductsResult {
 }
 
 function mapBrand(b: Brand): BrandItem {
-  return { id: b.id, name: b.name, slug: b.slug };
+  return { id: b.id, name: b.name, slug: b.slug, logoUrl: b.logoUrl ?? null };
 }
 
 export class BrandService {

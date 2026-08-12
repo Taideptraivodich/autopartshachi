@@ -57,12 +57,23 @@ const BrandListView: React.FC = () => {
         </div>
       ) : (
         <div className={styles.brandGrid}>
-          {brands.map((brand) => (
-            <Link key={brand.id} to={`/thuong-hieu/${brand.slug}`} className={styles.brandCard}>
-              <div className={styles.brandAvatar}>{brand.name[0]?.toUpperCase()}</div>
-              <span className={styles.brandName}>{brand.name}</span>
-            </Link>
-          ))}
+          {brands.map((brand) => {
+            const logoSrc = brand.logoUrl?.startsWith('/uploads/')
+              ? `http://localhost:3001${brand.logoUrl}`
+              : brand.logoUrl;
+            return (
+              <Link key={brand.id} to={`/thuong-hieu/${brand.slug}`} className={styles.brandCard}>
+                <div className={styles.brandAvatar}>
+                  {logoSrc ? (
+                    <img src={logoSrc} alt={brand.name} style={{ width: 48, height: 48, objectFit: 'contain', display: 'block' }} />
+                  ) : (
+                    brand.name[0]?.toUpperCase()
+                  )}
+                </div>
+                <span className={styles.brandName}>{brand.name}</span>
+              </Link>
+            );
+          })}
         </div>
       )}
     </>

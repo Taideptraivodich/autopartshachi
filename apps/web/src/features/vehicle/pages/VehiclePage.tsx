@@ -8,6 +8,15 @@ import styles from './VehiclePage.module.css';
 
 // ── Vehicle Brand List ──────────────────────────────────────────────────────
 
+const API_BASE = (import.meta as unknown as { env: Record<string, string> }).env.VITE_API_BASE_URL ?? "http://localhost:3001/api";
+const STATIC_BASE = API_BASE.replace(/\/api$/, "");
+
+function resolveLogoUrl(logoUrl: string | null | undefined): string | null {
+  if (!logoUrl) return null;
+  if (logoUrl.startsWith("/uploads/")) return `${STATIC_BASE}${logoUrl}`;
+  return logoUrl;
+}
+
 const VehicleListView: React.FC = () => {
   const [brands, setBrands] = useState<VehicleBrandListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,15 +62,28 @@ const VehicleListView: React.FC = () => {
         </div>
       ) : (
         <div className={styles.brandGrid}>
-          {brands.map((brand) => (
-            <Link key={brand.id} to={`/hang-xe/${brand.slug}`} className={styles.brandCard}>
-              <div className={styles.brandAvatar}>{brand.name[0]?.toUpperCase()}</div>
-              <span className={styles.brandName}>{brand.name}</span>
-              {brand.countryOfOrigin && (
-                <span className={styles.brandMeta}>{brand.countryOfOrigin}</span>
-              )}
-            </Link>
-          ))}
+          {brands.map((brand) => {
+            const logoSrc = resolveLogoUrl((brand as VehicleBrandListItem & { logoUrl?: string | null }).logoUrl);
+            return (
+              <Link key={brand.id} to={`/hang-xe/${brand.slug}`} className={styles.brandCard}>
+                <div className={styles.brandAvatar}>
+                  {logoSrc ? (
+                    <img
+                      src={logoSrc}
+                      alt={brand.name}
+                      style={{ width: 48, height: 48, objectFit: "contain", display: "block" }}
+                    />
+                  ) : (
+                    brand.name[0]?.toUpperCase()
+                  )}
+                </div>
+                <span className={styles.brandName}>{brand.name}</span>
+                {brand.countryOfOrigin && (
+                  <span className={styles.brandMeta}>{brand.countryOfOrigin}</span>
+                )}
+              </Link>
+            );
+          })}
         </div>
       )}
     </>
@@ -143,7 +165,18 @@ const VehicleDetailView: React.FC<{ slug: string }> = ({ slug }) => {
       ) : (
         <div className={styles.detailHeader}>
           <div className={styles.detailAvatar}>
-            {brand?.name[0]?.toUpperCase() ?? '?'}
+            {(() => {
+              const logoSrc = resolveLogoUrl((brand as (typeof brand & { logoUrl?: string | null }))?.logoUrl);
+              return logoSrc ? (
+                <img
+                  src={logoSrc}
+                  alt={brand?.name ?? ''}
+                  style={{ width: 48, height: 48, objectFit: "contain", display: "block" }}
+                />
+              ) : (
+                brand?.name[0]?.toUpperCase() ?? '?'
+              );
+            })()}
           </div>
           <div className={styles.detailInfo}>
             <h1 className={styles.title}>{brand?.name}</h1>

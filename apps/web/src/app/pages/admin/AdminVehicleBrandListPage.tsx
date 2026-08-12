@@ -3,7 +3,7 @@
  * UX: 3 bảng song song (hoặc drill-down trên mobile).
  * Chọn hãng → hiện dòng xe bên phải; chọn dòng xe → hiện đời xe.
  */
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useAdminAuth } from "../../../features/admin/context/AdminAuthContext";
 import { Button, Input } from "../../../components/ui";
@@ -20,14 +20,161 @@ import {
   createAdminVehicleGeneration,
   updateAdminVehicleGeneration,
   deleteAdminVehicleGeneration,
+  uploadImage,
   type AdminVehicleBrand,
   type AdminVehicleModel,
   type AdminVehicleGeneration,
 } from "../../../features/admin/api/admin-catalog.api";
 
-// ─────────────────────────────────────────────────────────────
-// Generic modal for simple name-based forms
-// ─────────────────────────────────────────────────────────────
+const STATIC_BASE = "http://localhost:3001";
+
+function resolveUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (url.startsWith("/uploads/")) return `${STATIC_BASE}${url}`;
+  return url;
+}
+
+// ─── ImageUploadField ────────────────────────────────────────────────────────
+
+interface ImageUploadFieldProps {
+  value: string;
+  onChange: (url: string) => void;
+  label?: string;
+}
+
+const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
+  value,
+  onChange,
+  label = "Ảnh logo",
+}) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadError(null);
+    setUploading(true);
+    try {
+      const url = await uploadImage(file);
+      onChange(url);
+    } catch (err) {
+      setUploadError((err as Error).message ?? "Upload thất bại");
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  };
+
+  const resolved = resolveUrl(value);
+
+  return (
+    <div>
+      <label style={{ fontSize: "0.85rem", color: "#374151", display: "block", marginBottom: 6 }}>
+        {label}
+      </label>
+
+      {resolved && (
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+          <img
+            src={resolved}
+            alt="logo"
+            style={{
+              width: 52, height: 52, objectFit: "contain",
+              border: "1px solid #e5e7eb", borderRadius: 6, background: "#f9fafb",
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            style={{ fontSize: "0.78rem", color: "#b91c1c", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+          >
+            Xóa ảnh
+          </button>
+        </div>
+      )}
+
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <button
+          type="button"
+          disabled={uploading}
+          onClick={() => inputRef.current?.click()}
+          style={{
+            fontSize: "0.82rem", padding: "5px 12px", borderRadius: 6,
+            border: "1px solid #d1d5db", background: uploading ? "#f3f4f6" : "#fff",
+            cursor: uploading ? "not-allowed" : "pointer", color: "#374151",
+          }}
+        >
+          {uploading ? "Đang tải lên…" : resolved ? "Đổi ảnh" : "Chọn ảnh từ máy"}
+        </button>
+        <span style={{ fontSize: "0.75rem", color: "#9ca3af" }}>JPEG, PNG, WebP — tối đa 5MB</span>
+      </div>
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        style={{ display: "none" }}
+        onChange={handleFile}
+      />
+
+      {uploadError && (
+        <p style={{ color: "#b91c1c", fontSize: "0.8rem", marginTop: 4 }}>{uploadError}</p>
+      )}
+    </div>
+  );
+};
+
+// ─── Brand Modal ─────────────────────────────────────────────────────────────
+
+interface BrandModalProps {
+  title: string;
+  form: Record<string, string>;
+  saving: boolean;
+  onClose: () => void;
+  onSave: () => void;
+  onChange: (key: string, val: string) => void;
+}
+
+const BrandModal: React.FC<BrandModalProps> = ({ title, form, saving, onClose, onSave, onChange }) => (
+  <div style={S.backdrop} onClick={onClose}>
+    <div style={S.modal} onClick={(e) => e.stopPropagation()}>
+      <h3 style={{ marginTop: 0 }}>{title}</h3>
+      <Input
+        label="Tên hãng *"
+        value={form.name ?? ""}
+        onChange={(e) => onChange("name", e.target.value)}
+        autoFocus
+      />
+      <Input
+        label="Quốc gia"
+        value={form.countryOfOrigin ?? ""}
+        onChange={(e) => onChange("countryOfOrigin", e.target.value)}
+        placeholder="Nhật Bản, Hàn Quốc…"
+      />
+      <ImageUploadField
+        label="Logo hãng xe"
+        value={form.logoUrl ?? ""}
+        onChange={(url) => onChange("logoUrl", url)}
+      />
+      <label style={S.checkLabel}>
+        <input
+          type="checkbox"
+          checked={form.isActive === "true"}
+          onChange={(e) => onChange("isActive", e.target.checked ? "true" : "false")}
+        />
+        {" "}Hoạt động
+      </label>
+      <div style={S.modalActions}>
+        <Button variant="ghost" onClick={onClose}>Hủy</Button>
+        <Button variant="primary" loading={saving} onClick={onSave}>Lưu</Button>
+      </div>
+    </div>
+  </div>
+);
+
+// ─── Generic simple modal (model, generation) ─────────────────────────────────
 
 interface NameModalProps {
   title: string;
@@ -72,9 +219,7 @@ const NameModal: React.FC<NameModalProps> = ({ title, fields, values, saving, on
   </div>
 );
 
-// ─────────────────────────────────────────────────────────────
-// Main page
-// ─────────────────────────────────────────────────────────────
+// ─── Main page ────────────────────────────────────────────────────────────────
 
 const AdminVehicleBrandListPage: React.FC = () => {
   const { logout } = useAdminAuth();
@@ -106,7 +251,7 @@ const AdminVehicleBrandListPage: React.FC = () => {
   const [genSaving, setGenSaving] = useState(false);
   const [genDeleting, setGenDeleting] = useState<number | null>(null);
 
-  // ── Load brands ──
+  // ── Loaders ──
   const loadBrands = useCallback(async () => {
     setBrandLoading(true);
     try { setBrands(await listAdminVehicleBrands()); }
@@ -116,21 +261,16 @@ const AdminVehicleBrandListPage: React.FC = () => {
 
   useEffect(() => { loadBrands(); }, [loadBrands]);
 
-  // ── Load models when brand selected ──
   const loadModels = useCallback(async (brandId: number) => {
     setModelLoading(true);
-    setModels([]);
-    setSelectedModel(null);
-    setGenerations([]);
+    setModels([]); setSelectedModel(null); setGenerations([]);
     try { setModels(await listAdminVehicleModels(brandId)); }
     catch (e) { setError((e as Error).message); }
     finally { setModelLoading(false); }
   }, []);
 
-  // ── Load generations when model selected ──
   const loadGenerations = useCallback(async (modelId: number) => {
-    setGenLoading(true);
-    setGenerations([]);
+    setGenLoading(true); setGenerations([]);
     try { setGenerations(await listAdminVehicleGenerations(modelId)); }
     catch (e) { setError((e as Error).message); }
     finally { setGenLoading(false); }
@@ -149,7 +289,12 @@ const AdminVehicleBrandListPage: React.FC = () => {
     if (!brandForm.name?.trim()) return;
     setBrandSaving(true);
     try {
-      const payload = { name: brandForm.name.trim(), countryOfOrigin: brandForm.countryOfOrigin || undefined, logoUrl: brandForm.logoUrl || undefined, isActive: brandForm.isActive === "true" };
+      const payload = {
+        name: brandForm.name.trim(),
+        countryOfOrigin: brandForm.countryOfOrigin || undefined,
+        logoUrl: brandForm.logoUrl || undefined,
+        isActive: brandForm.isActive === "true",
+      };
       if (brandModal.editing) await updateAdminVehicleBrand(brandModal.editing.id, payload);
       else await createAdminVehicleBrand(payload);
       setBrandModal({ open: false, editing: null });
@@ -160,8 +305,11 @@ const AdminVehicleBrandListPage: React.FC = () => {
   const deleteBrand = async (b: AdminVehicleBrand) => {
     if (!window.confirm(`Xóa hãng xe "${b.name}"?`)) return;
     setBrandDeleting(b.id);
-    try { await deleteAdminVehicleBrand(b.id); await loadBrands(); if (selectedBrand?.id === b.id) { setSelectedBrand(null); setModels([]); setGenerations([]); } }
-    catch (e) { setError((e as Error).message); }
+    try {
+      await deleteAdminVehicleBrand(b.id);
+      await loadBrands();
+      if (selectedBrand?.id === b.id) { setSelectedBrand(null); setModels([]); setGenerations([]); }
+    } catch (e) { setError((e as Error).message); }
     finally { setBrandDeleting(null); }
   };
 
@@ -256,25 +404,35 @@ const AdminVehicleBrandListPage: React.FC = () => {
             {brandLoading ? <p style={S.loading}>Đang tải…</p> : (
               <ul style={S.list}>
                 {brands.length === 0 && <li style={S.emptyItem}>Chưa có hãng nào.</li>}
-                {brands.map((b) => (
-                  <li
-                    key={b.id}
-                    style={{ ...S.listItem, ...(selectedBrand?.id === b.id ? S.listItemActive : {}) }}
-                    onClick={() => { setSelectedBrand(b); loadModels(b.id); }}
-                  >
-                    <span style={S.itemName}>{b.name}</span>
-                    {b.countryOfOrigin && <span style={S.itemSub}>{b.countryOfOrigin}</span>}
-                    <div style={S.itemActions}>
-                      <button style={S.iconBtn} onClick={(e) => { e.stopPropagation(); openBrandEdit(b); }} title="Sửa">✏️</button>
-                      <button
-                        style={S.iconBtn}
-                        disabled={brandDeleting === b.id}
-                        onClick={(e) => { e.stopPropagation(); deleteBrand(b); }}
-                        title="Xóa"
-                      >🗑️</button>
-                    </div>
-                  </li>
-                ))}
+                {brands.map((b) => {
+                  const logo = resolveUrl(b.logoUrl);
+                  return (
+                    <li
+                      key={b.id}
+                      style={{ ...S.listItem, ...(selectedBrand?.id === b.id ? S.listItemActive : {}) }}
+                      onClick={() => { setSelectedBrand(b); loadModels(b.id); }}
+                    >
+                      {logo ? (
+                        <img src={logo} alt={b.name} style={{ width: 28, height: 28, objectFit: "contain", flexShrink: 0 }} />
+                      ) : (
+                        <span style={{ width: 28, height: 28, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem", background: "#f3f4f6", borderRadius: 4 }}>
+                          🚗
+                        </span>
+                      )}
+                      <span style={S.itemName}>{b.name}</span>
+                      {b.countryOfOrigin && <span style={S.itemSub}>{b.countryOfOrigin}</span>}
+                      <div style={S.itemActions}>
+                        <button style={S.iconBtn} onClick={(e) => { e.stopPropagation(); openBrandEdit(b); }} title="Sửa">✏️</button>
+                        <button
+                          style={S.iconBtn}
+                          disabled={brandDeleting === b.id}
+                          onClick={(e) => { e.stopPropagation(); deleteBrand(b); }}
+                          title="Xóa"
+                        >🗑️</button>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>
@@ -283,9 +441,7 @@ const AdminVehicleBrandListPage: React.FC = () => {
           <div style={S.col}>
             <div style={S.colHeader}>
               <strong>{selectedBrand ? `Dòng xe — ${selectedBrand.name}` : "Dòng xe"}</strong>
-              {selectedBrand && (
-                <Button variant="primary" size="sm" onClick={openModelCreate}>+ Thêm</Button>
-              )}
+              {selectedBrand && <Button variant="primary" size="sm" onClick={openModelCreate}>+ Thêm</Button>}
             </div>
             {!selectedBrand ? (
               <p style={S.placeholder}>← Chọn hãng xe</p>
@@ -319,9 +475,7 @@ const AdminVehicleBrandListPage: React.FC = () => {
           <div style={S.col}>
             <div style={S.colHeader}>
               <strong>{selectedModel ? `Đời xe — ${selectedModel.name}` : "Đời xe"}</strong>
-              {selectedModel && (
-                <Button variant="primary" size="sm" onClick={openGenCreate}>+ Thêm</Button>
-              )}
+              {selectedModel && <Button variant="primary" size="sm" onClick={openGenCreate}>+ Thêm</Button>}
             </div>
             {!selectedModel ? (
               <p style={S.placeholder}>← Chọn dòng xe</p>
@@ -331,9 +485,7 @@ const AdminVehicleBrandListPage: React.FC = () => {
                 {generations.map((g) => (
                   <li key={g.id} style={S.listItem}>
                     <span style={S.itemName}>{g.name}</span>
-                    <span style={S.itemSub}>
-                      {g.yearStart}–{g.yearEnd !== null ? g.yearEnd : "nay"}
-                    </span>
+                    <span style={S.itemSub}>{g.yearStart}–{g.yearEnd !== null ? g.yearEnd : "nay"}</span>
                     <div style={S.itemActions}>
                       <button style={S.iconBtn} onClick={() => openGenEdit(g)} title="Sửa">✏️</button>
                       <button
@@ -351,17 +503,10 @@ const AdminVehicleBrandListPage: React.FC = () => {
         </div>
       </main>
 
-      {/* ── Modals ── */}
       {brandModal.open && (
-        <NameModal
+        <BrandModal
           title={brandModal.editing ? "Sửa hãng xe" : "Thêm hãng xe"}
-          fields={[
-            { label: "Tên hãng *", key: "name" },
-            { label: "Quốc gia", key: "countryOfOrigin" },
-            { label: "URL logo", key: "logoUrl" },
-            { label: "Hoạt động", key: "isActive", type: "checkbox" },
-          ]}
-          values={brandForm}
+          form={brandForm}
           saving={brandSaving}
           onClose={() => setBrandModal({ open: false, editing: null })}
           onSave={saveBrand}
