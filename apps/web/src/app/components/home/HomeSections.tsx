@@ -13,7 +13,7 @@ import type {
   BrandListItem,
   VehicleBrandListItem,
 } from '../../../features/product/api/types';
-import styles from '../../pages/HomePage.module.css';
+import styles from './HomeSections.module.css';
 
 export const HeroSection: React.FC = () => (
   <section className={styles.hero}>
