@@ -20,13 +20,19 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({ images, productName }) 
     <div className={styles.gallery}>
       <div className={styles.mainWrap}>
         {active ? (
-          <img
-            src={active.imageUrl}
-            alt={active.altText ?? productName}
-            className={styles.mainImage}
-          />
+          <>
+            <img
+              src={active.imageUrl}
+              alt={active.altText ?? productName}
+              className={styles.mainImage}
+            />
+            <span className={styles.watermark} aria-hidden="true">
+              <strong>HACHI</strong>
+              <small>ORIGINAL PARTS</small>
+            </span>
+          </>
         ) : (
-          <div className={styles.noImage} aria-label="Không có ảnh">⚙️</div>
+          <div className={styles.noImage} aria-label="Không có ảnh" />
         )}
       </div>
 
