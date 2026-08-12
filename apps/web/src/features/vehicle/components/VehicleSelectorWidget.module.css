@@ -1,29 +1,53 @@
 .widget {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+  border-radius: 0;
   padding: var(--space-5);
 }
 
 .widgetTitle {
   font-size: var(--text-base);
   font-weight: var(--font-semibold);
-  margin-bottom: var(--space-4);
+  margin: 0 0 var(--space-4);
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-3);
+  color: var(--color-text-primary);
 }
+
+.vehicleMark {
+  width: 24px;
+  height: 16px;
+  display: inline-block;
+  position: relative;
+  border: 1.5px solid currentColor;
+  border-radius: 50% 50% 35% 35%;
+  color: var(--color-primary-500);
+  flex-shrink: 0;
+}
+
+.vehicleMark::before,
+.vehicleMark::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  width: 5px;
+  height: 5px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  background: var(--color-surface);
+}
+
+.vehicleMark::before { left: 1px; }
+.vehicleMark::after { right: 1px; }
 
 .dropdownRow {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-3);
-  flex-wrap: wrap;
 }
 
-.dropdownRow > * {
-  flex: 1;
-  min-width: 140px;
-}
+.dropdownRow > * { min-width: 0; }
 
 .ctaRow {
   margin-top: var(--space-4);
@@ -36,10 +60,11 @@
 .ctaButton {
   display: inline-flex;
   align-items: center;
+  gap: var(--space-2);
   padding: var(--space-2) var(--space-4);
   background: var(--color-primary);
   color: #fff;
-  border-radius: var(--radius-md);
+  border-radius: 0;
   text-decoration: none;
   font-size: var(--text-sm);
   font-weight: var(--font-medium);
@@ -48,6 +73,7 @@
 
 .ctaButton:hover {
   opacity: 0.88;
+  text-decoration: none;
 }
 
 .ctaHint {
@@ -55,7 +81,6 @@
   color: var(--color-text-tertiary);
 }
 
-/* compact mode */
 .compact {
   display: flex;
   align-items: center;
@@ -68,6 +93,7 @@
 
 .compact:hover {
   color: var(--color-text-primary);
+  text-decoration: none;
 }
 
 .compactLabel {
@@ -87,6 +113,8 @@
   font-size: var(--text-sm);
 }
 
-.clearBtn:hover {
-  color: var(--color-error, #ef4444);
+.clearBtn:hover { color: var(--color-text-primary); }
+
+@media (max-width: 720px) {
+  .dropdownRow { grid-template-columns: 1fr; }
 }
