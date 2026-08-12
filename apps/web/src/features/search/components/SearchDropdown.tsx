@@ -24,10 +24,7 @@ const SearchDropdown: React.FC<SearchDropdownProps> = ({
   visible,
 }) => {
   if (!visible) return null;
-
   const showHistory = query.length < 2;
-
-  // Không render gì nếu không có history và không đang search
   if (showHistory && history.length === 0) return null;
 
   return (
@@ -37,12 +34,7 @@ const SearchDropdown: React.FC<SearchDropdownProps> = ({
           <div className={styles.sectionHeader}>
             <span className={styles.sectionTitle}>Tìm kiếm gần đây</span>
             {history.length > 0 && (
-              <button
-                type="button"
-                className={styles.clearAll}
-                onClick={onClearHistory}
-                aria-label="Xóa tất cả lịch sử"
-              >
+              <button type="button" className={styles.clearAll} onClick={onClearHistory} aria-label="Xóa tất cả lịch sử">
                 Xóa tất cả
               </button>
             )}
@@ -50,23 +42,14 @@ const SearchDropdown: React.FC<SearchDropdownProps> = ({
           <ul className={styles.list}>
             {history.map((kw) => (
               <li key={kw} className={styles.item}>
-                <button
-                  type="button"
-                  className={styles.itemBtn}
-                  onClick={() => onSelect(kw)}
-                  role="option"
-                  aria-selected={false}
-                >
-                  <span className={styles.itemIcon} aria-hidden="true">🕐</span>
+                <button type="button" className={styles.itemBtn} onClick={() => onSelect(kw)} role="option" aria-selected={false}>
+                  <span className={`${styles.itemIcon} ${styles.itemHistoryIcon}`} aria-hidden="true" />
                   <span className={styles.itemLabel}>{kw}</span>
                 </button>
                 <button
                   type="button"
                   className={styles.removeBtn}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onRemoveHistory(kw);
-                  }}
+                  onClick={(e) => { e.stopPropagation(); onRemoveHistory(kw); }}
                   aria-label={`Xóa "${kw}" khỏi lịch sử`}
                 >
                   ✕
@@ -78,30 +61,17 @@ const SearchDropdown: React.FC<SearchDropdownProps> = ({
       ) : (
         <>
           {loading ? (
-            <div className={styles.loading} aria-live="polite">
-              <span className={styles.spinner} aria-hidden="true" />
-              Đang tìm...
-            </div>
+            <div className={styles.loading} aria-live="polite"><span className={styles.spinner} aria-hidden="true" />Đang tìm...</div>
           ) : suggestions.length === 0 ? (
             <div className={styles.empty}>Không tìm thấy gợi ý</div>
           ) : (
             <>
-              <div className={styles.sectionHeader}>
-                <span className={styles.sectionTitle}>Gợi ý</span>
-              </div>
+              <div className={styles.sectionHeader}><span className={styles.sectionTitle}>Gợi ý</span></div>
               <ul className={styles.list}>
                 {suggestions.map((item, idx) => (
                   <li key={`${item.type}-${item.value}-${idx}`} className={styles.item}>
-                    <button
-                      type="button"
-                      className={styles.itemBtn}
-                      onClick={() => onSelect(item.value, item.slug)}
-                      role="option"
-                      aria-selected={false}
-                    >
-                      <span className={styles.itemIcon} aria-hidden="true">
-                        {item.type === "product" ? "🔍" : "🔢"}
-                      </span>
+                    <button type="button" className={styles.itemBtn} onClick={() => onSelect(item.value, item.slug)} role="option" aria-selected={false}>
+                      <span className={`${styles.itemIcon} ${item.type === "product" ? styles.itemProductIcon : styles.itemOemIcon}`} aria-hidden="true" />
                       <span className={styles.itemLabel}>{item.label}</span>
                     </button>
                   </li>
