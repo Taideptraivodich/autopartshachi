@@ -49,16 +49,18 @@ export const HeroSection: React.FC = () => (
 export const VehicleFinderSection: React.FC = () => (
   <section className={styles.finderSection}>
     <div className="container">
-      <div className={styles.finderIntro}>
-        <div>
-          <p className={styles.eyebrow}>VEHICLE FINDER</p>
-          <h2 className={styles.finderTitle}>Tìm phụ tùng theo xe</h2>
+      <div className={styles.finderPanel}>
+        <div className={styles.finderIntro}>
+          <div>
+            <p className={styles.eyebrow}>VEHICLE FINDER</p>
+            <h2 className={styles.finderTitle}>Tìm phụ tùng theo xe</h2>
+          </div>
+          <p className={styles.finderText}>
+            Chọn hãng, dòng và đời xe để lọc phụ tùng phù hợp.
+          </p>
         </div>
-        <p className={styles.finderText}>
-          Chọn hãng, dòng và đời xe để lọc nhanh danh mục phù hợp.
-        </p>
+        <VehicleSelectorWidget mode="full" />
       </div>
-      <VehicleSelectorWidget mode="full" />
     </div>
   </section>
 );
