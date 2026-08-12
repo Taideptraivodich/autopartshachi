@@ -49,13 +49,38 @@
 
 .dropdownRow > * { min-width: 0; }
 
+.dropdownRow > label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  line-height: 1.45;
+}
+
 .dropdownRow label,
 .dropdownRow select {
   font-size: var(--text-base);
 }
 
+.dropdownRow select {
+  min-height: 46px;
+  width: 100%;
+  padding: 0 var(--space-3);
+  line-height: 1.5;
+  border: 1px solid var(--color-border);
+  border-radius: 0;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+.dropdownRow select:focus {
+  outline: none;
+  border-color: var(--color-primary-400);
+  box-shadow: var(--shadow-focus);
+}
+
 .ctaRow {
-  margin-top: var(--space-7);
+  margin-top: var(--space-8);
   display: flex;
   align-items: center;
   gap: var(--space-4);
@@ -84,6 +109,7 @@
 
 .ctaHint {
   font-size: var(--text-sm);
+  line-height: 1.6;
   color: var(--color-text-secondary);
 }
 
