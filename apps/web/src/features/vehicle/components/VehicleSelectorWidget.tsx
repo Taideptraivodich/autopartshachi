@@ -39,7 +39,6 @@ const VehicleSelectorWidget: React.FC<VehicleSelectorWidgetProps> = ({
   const [loadingModels, setLoadingModels] = useState(false);
   const [loadingGens, setLoadingGens] = useState(false);
 
-  // Mount: load brands + restore saved vehicle state
   useEffect(() => {
     fetchAllVehicleBrands()
       .then((res) => setBrands(res.data))
@@ -48,7 +47,6 @@ const VehicleSelectorWidget: React.FC<VehicleSelectorWidgetProps> = ({
     const saved = getSelected();
     if (!saved) return;
 
-    // Restore saved vehicle — load models and generations sequentially
     setCurrentVehicle(saved);
     setSelectedBrandId(saved.brandId);
     setSelectedModelId(saved.modelId);
@@ -161,12 +159,11 @@ const VehicleSelectorWidget: React.FC<VehicleSelectorWidgetProps> = ({
     onVehicleSelect?.(null);
   }, [clearSelected, onVehicleSelect]);
 
-  // ── compact mode ──────────────────────────────────────────────────────────
   if (mode === "compact") {
     if (currentVehicle) {
       return (
         <div className={styles.compact}>
-          <span>🚗</span>
+          <span className={styles.vehicleMark} aria-hidden="true" />
           <span className={styles.compactLabel} title={currentVehicle.generationLabel}>
             {currentVehicle.brandName} {currentVehicle.modelName} {currentVehicle.generationName.split("–")[0]}
           </span>
@@ -178,13 +175,12 @@ const VehicleSelectorWidget: React.FC<VehicleSelectorWidgetProps> = ({
     }
     return (
       <Link to="/hang-xe" className={styles.compact}>
-        <span>🚗</span>
+        <span className={styles.vehicleMark} aria-hidden="true" />
         <span>Chọn xe</span>
       </Link>
     );
   }
 
-  // ── full mode ─────────────────────────────────────────────────────────────
   const brandOptions = brands.map((b) => ({ value: String(b.id), label: b.name }));
   const modelOptions = models.map((m) => ({ value: String(m.id), label: m.name }));
   const genOptions = generations.map((g) => {
@@ -197,7 +193,7 @@ const VehicleSelectorWidget: React.FC<VehicleSelectorWidgetProps> = ({
   return (
     <div className={styles.widget}>
       <p className={styles.widgetTitle}>
-        <span>🚗</span>
+        <span className={styles.vehicleMark} aria-hidden="true" />
         <span>Chọn xe của bạn</span>
       </p>
       <div className={styles.dropdownRow}>
@@ -231,7 +227,7 @@ const VehicleSelectorWidget: React.FC<VehicleSelectorWidgetProps> = ({
             to={`/san-pham?vehicleGenerationId=${selectedGenId}`}
             className={styles.ctaButton}
           >
-            → Xem phụ tùng phù hợp
+            Xem phụ tùng phù hợp <span aria-hidden="true">→</span>
           </Link>
         ) : (
           <span className={styles.ctaHint}>Chọn đủ 3 cấp để tìm phụ tùng phù hợp</span>
