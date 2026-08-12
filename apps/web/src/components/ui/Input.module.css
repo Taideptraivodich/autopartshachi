@@ -1,8 +1,13 @@
-.wrapper { display: flex; flex-direction: column; gap: var(--space-1); }
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
 
 .label {
   font-size: var(--text-sm);
   font-weight: var(--font-medium);
+  line-height: 1.45;
   color: var(--color-text-primary);
 }
 
@@ -16,8 +21,10 @@
 
 .input {
   width: 100%;
-  padding: 0.625rem var(--space-3);
+  min-height: 46px;
+  padding: 0 var(--space-3);
   font-size: var(--text-sm);
+  line-height: 1.5;
   color: var(--color-text-primary);
   background-color: var(--color-surface);
   border: 1.5px solid var(--color-border);
@@ -27,20 +34,9 @@
 }
 
 .input::placeholder { color: var(--color-text-tertiary); }
-
 .input:hover { border-color: var(--color-border-strong); }
-
-.input:focus {
-  border-color: var(--color-border-focus);
-  box-shadow: var(--shadow-focus);
-}
-
-.input:disabled {
-  background-color: var(--color-surface-2);
-  color: var(--color-text-disabled);
-  cursor: not-allowed;
-}
-
+.input:focus { border-color: var(--color-border-focus); box-shadow: var(--shadow-focus); }
+.input:disabled { background-color: var(--color-surface-2); color: var(--color-text-disabled); cursor: not-allowed; }
 .hasLeft  { padding-left: var(--space-10); }
 .hasRight { padding-right: var(--space-10); }
 
@@ -57,5 +53,5 @@
 .hasError .input { border-color: var(--color-danger); }
 .hasError .input:focus { box-shadow: 0 0 0 3px rgba(220,38,38,0.2); }
 
-.error { font-size: var(--text-xs); color: var(--color-danger); }
-.hint  { font-size: var(--text-xs); color: var(--color-text-secondary); }
+.error { margin-top: 1px; font-size: var(--text-xs); line-height: 1.5; color: var(--color-danger); }
+.hint  { margin-top: 1px; font-size: var(--text-xs); line-height: 1.5; color: var(--color-text-secondary); }
