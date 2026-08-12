@@ -16,25 +16,31 @@ import type {
 } from '../../features/product/api/types';
 import styles from './HomePage.module.css';
 
-// ── Tiny inline sub-components ──────────────────────────────────────────────
-
 const FeaturedProductCard: React.FC<{ product: ProductListItem }> = ({ product }) => (
   <Link to={`/san-pham/${product.slug}`} className={styles.productCard}>
     <div className={styles.productImg}>
-      {product.featuredImage
-        ? <img src={product.featuredImage} alt={product.name} loading="lazy" />
-        : '🔩'}
+      {product.featuredImage ? (
+        <>
+          <img src={product.featuredImage} alt={product.name} loading="lazy" />
+          <span className={styles.productWatermark} aria-hidden="true">
+            <strong>HACHI</strong>
+            <small>ORIGINAL PARTS</small>
+          </span>
+        </>
+      ) : (
+        <div className={styles.productImgEmpty} aria-hidden="true" />
+      )}
     </div>
     <div className={styles.productBody}>
-      <p className={styles.productName}>{product.name}</p>
       {product.brand && <p className={styles.productBrand}>{product.brand.name}</p>}
-      <p className={styles.productSku}>{product.sku}</p>
-      {product.status === 'con_hang' && <span className={styles.productStatus}>Còn hàng</span>}
+      <p className={styles.productName}>{product.name}</p>
+      <div className={styles.productMeta}>
+        <span className={styles.productSku}>{product.sku}</span>
+        {product.status === 'con_hang' && <span className={styles.productStatus}>Còn hàng</span>}
+      </div>
     </div>
   </Link>
 );
-
-// ── Sections ────────────────────────────────────────────────────────────────
 
 const FeaturedProductsSection: React.FC = () => {
   const [products, setProducts] = useState<ProductListItem[]>([]);
@@ -43,7 +49,7 @@ const FeaturedProductsSection: React.FC = () => {
   useEffect(() => {
     fetchFeaturedProducts(8)
       .then((res) => setProducts(res.data))
-      .catch(() => {/* silent — home page degrades gracefully */})
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
@@ -51,16 +57,19 @@ const FeaturedProductsSection: React.FC = () => {
     <section className={styles.section}>
       <div className="container">
         <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Sản phẩm nổi bật</h2>
-          <Link to="/san-pham" className={styles.sectionLink}>Xem tất cả →</Link>
+          <div>
+            <p className={styles.eyebrow}>HACHI SELECTION</p>
+            <h2 className={styles.sectionTitle}>Sản phẩm nổi bật</h2>
+          </div>
+          <Link to="/san-pham" className={styles.sectionLink}>Xem tất cả <span aria-hidden="true">→</span></Link>
         </div>
         {loading ? (
           <div className={styles.productsGrid}>
             {Array.from({ length: 8 }).map((_, i) => <div key={i} className={styles.skeletonProduct} />)}
           </div>
         ) : products.length === 0 ? (
-          <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)' }}>
-            Chưa có sản phẩm nào. <Link to="/san-pham" style={{ color: 'var(--color-text-link)' }}>Xem tất cả →</Link>
+          <p className={styles.emptyState}>
+            Chưa có sản phẩm nổi bật. <Link to="/san-pham">Xem tất cả sản phẩm →</Link>
           </p>
         ) : (
           <div className={styles.productsGrid}>
@@ -85,33 +94,29 @@ const PopularCategoriesSection: React.FC = () => {
 
   const roots = categories.filter((c) => c.parentCategoryId === null).slice(0, 8);
 
-  // Fallback icons for categories
-  const icons: Record<string, string> = {
-    'he-thong-phanh': '🔧',
-    'he-thong-loc': '🛢',
-  };
-
   return (
     <section className={styles.section}>
       <div className="container">
         <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Danh mục phổ biến</h2>
-          <Link to="/danh-muc" className={styles.sectionLink}>Xem tất cả →</Link>
+          <div>
+            <p className={styles.eyebrow}>EXPLORE</p>
+            <h2 className={styles.sectionTitle}>Danh mục phụ tùng</h2>
+          </div>
+          <Link to="/danh-muc" className={styles.sectionLink}>Xem tất cả <span aria-hidden="true">→</span></Link>
         </div>
         {loading ? (
           <div className={styles.categoryGrid}>
-            {Array.from({ length: 6 }).map((_, i) => <div key={i} className={styles.skeletonCategory} />)}
+            {Array.from({ length: 8 }).map((_, i) => <div key={i} className={styles.skeletonCategory} />)}
           </div>
         ) : roots.length === 0 ? (
-          <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)' }}>
-            Chưa có danh mục nào.
-          </p>
+          <p className={styles.emptyState}>Chưa có danh mục nào.</p>
         ) : (
           <div className={styles.categoryGrid}>
-            {roots.map((cat) => (
+            {roots.map((cat, index) => (
               <Link key={cat.id} to={`/danh-muc/${cat.slug}`} className={styles.categoryCard}>
-                <span className={styles.catIcon}>{icons[cat.slug] ?? '📦'}</span>
+                <span className={styles.categoryIndex}>{String(index + 1).padStart(2, '0')}</span>
                 <span className={styles.catName}>{cat.name}</span>
+                <span className={styles.categoryArrow} aria-hidden="true">↗</span>
               </Link>
             ))}
           </div>
@@ -127,29 +132,34 @@ const PopularBrandsSection: React.FC = () => {
 
   useEffect(() => {
     fetchAllBrands()
-      .then((res) => setBrands(res.data.slice(0, 8)))
+      .then((res) => setBrands(res.data.slice(0, 10)))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
   return (
-    <section className={`${styles.section} ${styles.sectionAlt}`}>
+    <section className={`${styles.section} ${styles.sectionTint}`}>
       <div className="container">
         <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Thương hiệu phụ tùng</h2>
-          <Link to="/thuong-hieu" className={styles.sectionLink}>Xem tất cả →</Link>
+          <div>
+            <p className={styles.eyebrow}>AFTERMARKET BRANDS</p>
+            <h2 className={styles.sectionTitle}>Thương hiệu phụ tùng</h2>
+          </div>
+          <Link to="/thuong-hieu" className={styles.sectionLink}>Xem tất cả <span aria-hidden="true">→</span></Link>
         </div>
         {loading ? (
           <div className={styles.brandGrid}>
-            {Array.from({ length: 6 }).map((_, i) => <div key={i} className={styles.skeletonBrand} />)}
+            {Array.from({ length: 8 }).map((_, i) => <div key={i} className={styles.skeletonBrand} />)}
           </div>
         ) : brands.length === 0 ? (
-          <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)' }}>Chưa có thương hiệu.</p>
+          <p className={styles.emptyState}>Chưa có thương hiệu.</p>
         ) : (
           <div className={styles.brandGrid}>
             {brands.map((brand) => (
               <Link key={brand.id} to={`/thuong-hieu/${brand.slug}`} className={styles.brandCard}>
-                <div className={styles.brandLogo}>{brand.name[0]?.toUpperCase()}</div>
+                <div className={styles.brandLogo}>
+                  {brand.logoUrl ? <img src={brand.logoUrl} alt={brand.name} loading="lazy" /> : null}
+                </div>
                 <span className={styles.brandName}>{brand.name}</span>
               </Link>
             ))}
@@ -175,20 +185,25 @@ const VehicleBrandsSection: React.FC = () => {
     <section className={styles.section}>
       <div className="container">
         <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Tra cứu theo hãng xe</h2>
-          <Link to="/hang-xe" className={styles.sectionLink}>Xem tất cả →</Link>
+          <div>
+            <p className={styles.eyebrow}>VEHICLE MAKES</p>
+            <h2 className={styles.sectionTitle}>Hãng xe</h2>
+          </div>
+          <Link to="/hang-xe" className={styles.sectionLink}>Xem tất cả <span aria-hidden="true">→</span></Link>
         </div>
         {loading ? (
           <div className={styles.brandGrid}>
-            {Array.from({ length: 5 }).map((_, i) => <div key={i} className={styles.skeletonBrand} />)}
+            {Array.from({ length: 8 }).map((_, i) => <div key={i} className={styles.skeletonBrand} />)}
           </div>
         ) : brands.length === 0 ? (
-          <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)' }}>Chưa có dữ liệu hãng xe.</p>
+          <p className={styles.emptyState}>Chưa có dữ liệu hãng xe.</p>
         ) : (
           <div className={styles.brandGrid}>
             {brands.map((brand) => (
               <Link key={brand.id} to={`/hang-xe/${brand.slug}`} className={styles.brandCard}>
-                <div className={styles.brandLogo}>{brand.name[0]?.toUpperCase()}</div>
+                <div className={styles.brandLogo}>
+                  {brand.logoUrl ? <img src={brand.logoUrl} alt={brand.name} loading="lazy" /> : null}
+                </div>
                 <span className={styles.brandName}>{brand.name}</span>
               </Link>
             ))}
@@ -199,82 +214,76 @@ const VehicleBrandsSection: React.FC = () => {
   );
 };
 
-// ── Main HomePage ────────────────────────────────────────────────────────────
-
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
+
   return (
-  <>
-    <MetaTags
-      title="Trang chủ"
-      description="Cung cấp phụ tùng ô tô chính hãng. Tra cứu theo hãng xe, mã OEM. Giao hàng toàn quốc."
-    />
+    <>
+      <MetaTags
+        title="Trang chủ"
+        description="Cung cấp phụ tùng ô tô chính hãng. Tra cứu theo hãng xe, mã OEM. Giao hàng toàn quốc."
+      />
 
-    {/* Hero */}
-    <section className={styles.hero}>
-      <div className="container">
-        <div className={styles.heroBadge}>⚙ Phụ tùng chính hãng</div>
-        <h1 className={styles.heroTitle}>
-          Tra cứu &amp; đặt mua<br />
-          <span className={styles.heroAccent}>phụ tùng ô tô</span> dễ dàng
-        </h1>
-        <p className={styles.heroSubtitle}>
-          Hơn 10.000 mã phụ tùng. Tra cứu theo hãng xe, số khung, hoặc mã OEM.
-          Giao hàng toàn quốc trong 24–48 giờ.
-        </p>
-        <div className={styles.heroCtaRow}>
-          <Link to="/hang-xe" className={styles.heroCtaBtn}>🚗 Tra cứu theo hãng xe</Link>
-          <Link to="/san-pham" className={styles.heroCtaBtnSecondary}>Xem tất cả sản phẩm →</Link>
-        </div>
-      </div>
-    </section>
-
-    {/* Vehicle selector */}
-    <section className={styles.vehicleSection}>
-      <div className="container">
-        <VehicleSelectorWidget
-          mode="full"
-          onVehicleSelect={(v) => {
-            if (v) navigate(`/san-pham?vehicleGenerationId=${v.generationId}`);
-          }}
-        />
-      </div>
-    </section>
-
-    {/* Featured products – real API */}
-    <FeaturedProductsSection />
-
-    {/* Popular categories – real API */}
-    <PopularCategoriesSection />
-
-    {/* Product brands – real API */}
-    <PopularBrandsSection />
-
-    {/* Vehicle brands – real API */}
-    <VehicleBrandsSection />
-
-    {/* USP */}
-    <section className={styles.section}>
-      <div className="container">
-        <div className={styles.uspGrid}>
-          {[
-            { icon: '✅', title: 'Hàng chính hãng', desc: '100% phụ tùng có xuất xứ rõ ràng, tem nhãn đầy đủ.' },
-            { icon: '🔍', title: 'Tra cứu mã OEM', desc: 'Hỗ trợ tra cứu theo số khung, số máy và mã OEM gốc.' },
-            { icon: '🚚', title: 'Giao nhanh toàn quốc', desc: 'Giao hàng trong 24–48 giờ tại TP.HCM và các tỉnh thành.' },
-            { icon: '🛡', title: 'Bảo hành chính sách', desc: 'Bảo hành theo tiêu chuẩn nhà sản xuất, đổi trả dễ dàng.' },
-          ].map((usp) => (
-            <div key={usp.title} className={styles.uspCard}>
-              <span className={styles.uspIcon}>{usp.icon}</span>
-              <div>
-                <h3 className={styles.uspTitle}>{usp.title}</h3>
-                <p className={styles.uspDesc}>{usp.desc}</p>
+      <section className={styles.hero}>
+        <div className="container">
+          <div className={styles.heroInner}>
+            <div className={styles.heroCopy}>
+              <p className={styles.heroKicker}>HACHI / AUTOMOTIVE PARTS</p>
+              <h1 className={styles.heroTitle}>Phụ tùng đúng xe.<br /><span>Đúng mã.</span></h1>
+              <p className={styles.heroSubtitle}>
+                Khám phá phụ tùng theo hãng xe, đời xe hoặc mã OEM trong một không gian mua sắm gọn gàng, dễ tra cứu.
+              </p>
+              <div className={styles.heroActions}>
+                <Link to="/san-pham" className={styles.heroPrimary}>Khám phá sản phẩm <span aria-hidden="true">→</span></Link>
+                <Link to="/hang-xe" className={styles.heroSecondary}>Tra cứu theo hãng xe</Link>
               </div>
             </div>
-          ))}
+            <div className={styles.heroMeta} aria-hidden="true">
+              <span>HACHI</span>
+              <span>OEM / AFTERMARKET</span>
+            </div>
+          </div>
         </div>
-      </div>
-    </section>
-  </>
+      </section>
+
+      <section className={styles.finderSection}>
+        <div className="container">
+          <div className={styles.finderIntro}>
+            <div>
+              <p className={styles.eyebrow}>VEHICLE FINDER</p>
+              <h2 className={styles.finderTitle}>Tìm phụ tùng theo xe</h2>
+            </div>
+            <p className={styles.finderText}>Chọn hãng, dòng và đời xe để lọc nhanh danh mục phù hợp.</p>
+          </div>
+          <VehicleSelectorWidget
+            mode="full"
+            onVehicleSelect={(v) => {
+              if (v) navigate(`/san-pham?vehicleGenerationId=${v.generationId}`);
+            }}
+          />
+        </div>
+      </section>
+
+      <FeaturedProductsSection />
+      <PopularCategoriesSection />
+      <PopularBrandsSection />
+      <VehicleBrandsSection />
+
+      <section className={styles.trustSection}>
+        <div className="container">
+          <div className={styles.trustHeader}>
+            <p className={styles.eyebrow}>WHY HACHI</p>
+            <h2 className={styles.sectionTitle}>Mua phụ tùng với thông tin rõ ràng</h2>
+          </div>
+          <div className={styles.trustGrid}>
+            <div className={styles.trustItem}><span>01</span><div><h3>Hàng chính hãng</h3><p>Xuất xứ và thông tin phụ tùng được thể hiện rõ ràng.</p></div></div>
+            <div className={styles.trustItem}><span>02</span><div><h3>Tra cứu OEM</h3><p>Tìm theo mã OEM để giảm nhầm lẫn khi chọn phụ tùng.</p></div></div>
+            <div className={styles.trustItem}><span>03</span><div><h3>Giao hàng toàn quốc</h3><p>Hỗ trợ gửi hàng tới khách hàng ở nhiều tỉnh thành.</p></div></div>
+            <div className={styles.trustItem}><span>04</span><div><h3>Hỗ trợ tư vấn</h3><p>Liên hệ HACHI khi cần kiểm tra thêm thông tin tương thích.</p></div></div>
+          </div>
+        </div>
+      </section>
+    </>
   );
 };
 
