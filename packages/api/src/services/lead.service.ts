@@ -1,6 +1,9 @@
 import {
   LeadRepository,
   type CreateLeadInput,
+  type Lead,
+  type PaginatedLeads,
+  type LeadListParams,
 } from "autoparts-db/repositories";
 
 export class LeadService {
@@ -11,7 +14,6 @@ export class LeadService {
   ) {}
 
   async createLead(data: CreateLeadInput): Promise<{ id: number }> {
-    // Validate
     if (!data.name?.trim()) throw new Error("Vui lòng nhập họ tên");
     if (!data.phone?.trim()) throw new Error("Vui lòng nhập số điện thoại");
     if (!/^[0-9+\-\s]{8,15}$/.test(data.phone.trim())) {
@@ -20,7 +22,6 @@ export class LeadService {
 
     const id = await this.leadRepo.create(data);
 
-    // Telegram notification — fire-and-forget
     if (this.telegramToken && this.telegramChatId) {
       this.sendTelegram(data).catch(() => {});
     }
@@ -54,5 +55,20 @@ export class LeadService {
         }),
       },
     );
+  }
+
+  // ── Admin ────────────────────────────────────────────────────────────────
+
+  async adminListLeads(params: LeadListParams): Promise<PaginatedLeads> {
+    return this.leadRepo.findMany(params);
+  }
+
+  async adminMarkRead(id: number, isRead: boolean): Promise<Lead | null> {
+    const row = await this.leadRepo.markRead(id, isRead);
+    return row ?? null;
+  }
+
+  async adminDeleteLead(id: number): Promise<boolean> {
+    return this.leadRepo.remove(id);
   }
 }

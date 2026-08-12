@@ -16,8 +16,6 @@ import type {
 } from '../../features/product/api/types';
 import styles from './HomePage.module.css';
 
-const API_BASE = 'http://localhost:3001/api';
-
 // ── Tiny inline sub-components ──────────────────────────────────────────────
 
 const FeaturedProductCard: React.FC<{ product: ProductListItem }> = ({ product }) => (
@@ -201,63 +199,6 @@ const VehicleBrandsSection: React.FC = () => {
   );
 };
 
-// ── Hero search ─────────────────────────────────────────────────────────────
-
-const FALLBACK_TAGS = ['Lọc dầu Toyota', 'Má phanh Honda', 'Bugi Mazda', 'Dây curoa Hyundai'];
-
-const HeroSearch: React.FC = () => {
-  const navigate = useNavigate();
-  const [query, setQuery] = useState('');
-  const [popularTags, setPopularTags] = useState<string[]>(FALLBACK_TAGS);
-
-  useEffect(() => {
-    fetch(`${API_BASE}/search/pho-bien?limit=4`)
-      .then((r) => r.json())
-      .then((res: { data?: string[] }) => {
-        if (res.data && res.data.length > 0) setPopularTags(res.data);
-      })
-      .catch(() => {}); // giữ fallback nếu lỗi
-  }, []);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const q = query.trim();
-    if (!q) return;
-    navigate(`/tim-kiem?q=${encodeURIComponent(q)}`);
-  };
-
-  return (
-    <div className={styles.searchPlaceholder} aria-label="Khu vực tìm kiếm">
-      <form className={styles.searchBox} onSubmit={handleSubmit} role="search">
-        <span className={styles.searchIcon}>🔍</span>
-        <input
-          className={styles.searchInput}
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Nhập tên phụ tùng, mã OEM, hoặc hãng xe..."
-          aria-label="Từ khóa tìm kiếm"
-          autoComplete="off"
-        />
-        <button type="submit" className={styles.searchSubmit}>Tìm kiếm</button>
-      </form>
-      <div className={styles.searchTags}>
-        <span className={styles.tagLabel}>Tìm nhiều nhất:</span>
-        {popularTags.map((tag) => (
-          <button
-            key={tag}
-            type="button"
-            className={styles.tag}
-            onClick={() => navigate(`/tim-kiem?q=${encodeURIComponent(tag)}`)}
-          >
-            {tag}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-};
-
 // ── Main HomePage ────────────────────────────────────────────────────────────
 
 const HomePage: React.FC = () => {
@@ -281,7 +222,10 @@ const HomePage: React.FC = () => {
           Hơn 10.000 mã phụ tùng. Tra cứu theo hãng xe, số khung, hoặc mã OEM.
           Giao hàng toàn quốc trong 24–48 giờ.
         </p>
-        <HeroSearch />
+        <div className={styles.heroCtaRow}>
+          <Link to="/hang-xe" className={styles.heroCtaBtn}>🚗 Tra cứu theo hãng xe</Link>
+          <Link to="/san-pham" className={styles.heroCtaBtnSecondary}>Xem tất cả sản phẩm →</Link>
+        </div>
       </div>
     </section>
 

@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import type { BrandListItem, CategoryListItem, ProductFilterParams } from '../api/types';
-import { useVehicleSelector } from '../../vehicle/hooks/useVehicleSelector';
 import styles from './FilterSidebar.module.css';
 
 const STATUS_OPTIONS = [
@@ -31,8 +29,6 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
   loading,
 }) => {
   const [showAllCategories, setShowAllCategories] = useState(false);
-  const { getSelected, clearSelected } = useVehicleSelector();
-  const selectedVehicle = getSelected();
 
   // Chỉ hiển thị root categories
   const rootCategories = categories.filter((c) => c.parentCategoryId === null);
@@ -45,29 +41,6 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
 
   return (
     <div className={styles.sidebar}>
-      {/* Section: Xe của tôi */}
-      <div className={styles.section}>
-        <p className={styles.sectionTitle}>Xe của tôi</p>
-        {selectedVehicle ? (
-          <div className={styles.vehicleBadge}>
-            <span className={styles.vehicleBadgeLabel}>🚗 {selectedVehicle.generationLabel}</span>
-            <button
-              className={styles.vehicleBadgeClear}
-              onClick={() => {
-                clearSelected();
-                onChange({ ...filters, vehicleGenerationId: undefined });
-              }}
-              title="Bỏ chọn xe"
-            >
-              ✕
-            </button>
-          </div>
-        ) : (
-          <Link to="/hang-xe" className={styles.selectVehicleLink}>
-            + Chọn xe để lọc phụ tùng
-          </Link>
-        )}
-      </div>
       {/* Section: Thương hiệu */}
       <div className={styles.section}>
         <p className={styles.sectionTitle}>Thương hiệu</p>

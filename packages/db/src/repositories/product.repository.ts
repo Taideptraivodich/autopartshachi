@@ -75,6 +75,10 @@ export interface FindManyParams {
   pageSize?: number;
   /** Filter by vehicle generation compatibility. */
   vehicleGenerationId?: number;
+  /** Free-text search: ILIKE match on name or sku. */
+  q?: string;
+  /** Admin-only: when false, include hidden products. Defaults to true (public). */
+  onlyVisible?: boolean;
 }
 
 export interface PaginatedResult<T> {
@@ -146,6 +150,8 @@ export class ProductRepository {
       page = 1,
       pageSize = DEFAULT_PAGE_SIZE,
       vehicleGenerationId,
+      q,
+      onlyVisible = true,
     } = params;
 
     const safePage = Math.max(1, Math.floor(page));
@@ -160,6 +166,13 @@ export class ProductRepository {
     }
     if (status !== undefined) {
       conditions.push(eq(product.status, status));
+    }
+    if (onlyVisible) {
+      conditions.push(eq(product.isVisible, true));
+    }
+    if (q && q.trim().length > 0) {
+      const term = `%${q.trim()}%`;
+      conditions.push(or(like(product.name, term), like(product.sku, term))!);
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -453,5 +466,19 @@ export class ProductRepository {
       .where(eq(productCategoryMap.productId, productId));
 
     return rows.map((r) => r.categoryId);
+  }
+
+  /** Toggle is_visible for a product. Returns updated row or undefined when not found. */
+  async setVisibility(
+    id: number,
+    isVisible: boolean,
+  ): Promise<{ id: number; isVisible: boolean } | undefined> {
+    const rows = await this.db
+      .update(product)
+      .set({ isVisible })
+      .where(eq(product.id, id))
+      .returning({ id: product.id, isVisible: product.isVisible });
+
+    return rows[0];
   }
 }

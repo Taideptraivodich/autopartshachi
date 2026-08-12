@@ -7,6 +7,10 @@ export const SITE_CONFIG = {
   email: 'info@phutuong.vn',
   address: 'TP. Hồ Chí Minh, Việt Nam',
   workingHours: 'Thứ 2 – Thứ 7: 8:00 – 17:30',
+  zaloPhone: '0901234567',
+  // Bật/tắt tính năng tra cứu mã OEM trên toàn site.
+  // TODO: chuyển sang site_settings (DB, chỉnh từ admin) khi backend hỗ trợ key-value settings.
+  showOem: false,
 } as const;
 
 export const ROUTES = {

@@ -5,3 +5,4 @@ export * from "./compatibility";
 export * from "./admin";
 export * from "./analytics";
 export * from "./lead";
+export * from "./settings";

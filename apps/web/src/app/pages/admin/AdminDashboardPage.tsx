@@ -29,6 +29,26 @@ const AdminDashboardPage: React.FC = () => {
               Xem, thêm, sửa, xóa sản phẩm — danh mục, ảnh, mã OEM, xe tương thích.
             </p>
           </Link>
+          <Link to="/admin/thuong-hieu" style={styles.card}>
+            <h3 style={styles.cardTitle}>Thương hiệu</h3>
+            <p style={styles.cardDesc}>Quản lý thương hiệu sản phẩm (Toyota, Bosch…).</p>
+          </Link>
+          <Link to="/admin/danh-muc" style={styles.card}>
+            <h3 style={styles.cardTitle}>Danh mục</h3>
+            <p style={styles.cardDesc}>Quản lý cây danh mục sản phẩm (cha / con).</p>
+          </Link>
+          <Link to="/admin/hang-xe" style={styles.card}>
+            <h3 style={styles.cardTitle}>Hãng xe</h3>
+            <p style={styles.cardDesc}>Quản lý hãng → dòng → đời xe 3 cấp.</p>
+          </Link>
+          <Link to="/admin/cai-dat" style={styles.card}>
+            <h3 style={styles.cardTitle}>Cài đặt website</h3>
+            <p style={styles.cardDesc}>Hotline, Zalo, giờ làm việc, bật/tắt OEM…</p>
+          </Link>
+          <Link to="/admin/lead" style={styles.card}>
+            <h3 style={styles.cardTitle}>Lead liên hệ</h3>
+            <p style={styles.cardDesc}>Xem, đánh dấu đã đọc và xóa các lead từ form liên hệ.</p>
+          </Link>
         </div>
       </main>
     </div>

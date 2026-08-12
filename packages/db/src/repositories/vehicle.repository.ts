@@ -11,6 +11,30 @@ export type VehicleBrand = typeof vehicleBrand.$inferSelect;
 export type VehicleModel = typeof vehicleModel.$inferSelect;
 export type VehicleGeneration = typeof vehicleGeneration.$inferSelect;
 
+export interface VehicleBrandInput {
+  name: string;
+  slug: string;
+  countryOfOrigin?: string | null;
+  logoUrl?: string | null;
+  isActive?: boolean;
+}
+
+export interface VehicleModelInput {
+  vehicleBrandId: number;
+  name: string;
+  slug: string;
+  segment?: string | null;
+  isActive?: boolean;
+}
+
+export interface VehicleGenerationInput {
+  vehicleModelId: number;
+  name: string;
+  yearStart: number;
+  yearEnd?: number | null;
+  isActive?: boolean;
+}
+
 // ---------------------------------------------------------------------------
 // VehicleRepository
 // ---------------------------------------------------------------------------
@@ -105,6 +129,131 @@ export class VehicleRepository {
       .limit(1);
 
     return rows[0];
+  }
+
+  // ── Admin CRUD — Brands ──────────────────────────────────────────────────
+
+  /** Return all vehicle brands (active and inactive) — used by admin list. */
+  async findAllBrandsAdmin(): Promise<VehicleBrand[]> {
+    return this.db.select().from(vehicleBrand).orderBy(vehicleBrand.name);
+  }
+
+  async createBrand(input: VehicleBrandInput): Promise<VehicleBrand> {
+    const rows = await this.db
+      .insert(vehicleBrand)
+      .values({
+        name: input.name,
+        slug: input.slug,
+        countryOfOrigin: input.countryOfOrigin,
+        logoUrl: input.logoUrl,
+        isActive: input.isActive ?? true,
+      })
+      .returning();
+    return rows[0]!;
+  }
+
+  async updateBrand(id: number, input: Partial<VehicleBrandInput>): Promise<VehicleBrand | undefined> {
+    const rows = await this.db
+      .update(vehicleBrand)
+      .set({ ...input, updatedAt: new Date() })
+      .where(eq(vehicleBrand.id, id))
+      .returning();
+    return rows[0];
+  }
+
+  async deleteBrand(id: number): Promise<boolean> {
+    const rows = await this.db
+      .delete(vehicleBrand)
+      .where(eq(vehicleBrand.id, id))
+      .returning({ id: vehicleBrand.id });
+    return rows.length > 0;
+  }
+
+  // ── Admin CRUD — Models ──────────────────────────────────────────────────
+
+  /** Return all models for a brand (active and inactive) — used by admin list. */
+  async findAllModelsAdmin(brandId: number): Promise<VehicleModel[]> {
+    return this.db
+      .select()
+      .from(vehicleModel)
+      .where(eq(vehicleModel.vehicleBrandId, brandId))
+      .orderBy(vehicleModel.name);
+  }
+
+  async createModel(input: VehicleModelInput): Promise<VehicleModel> {
+    const rows = await this.db
+      .insert(vehicleModel)
+      .values({
+        vehicleBrandId: input.vehicleBrandId,
+        name: input.name,
+        slug: input.slug,
+        segment: input.segment,
+        isActive: input.isActive ?? true,
+      })
+      .returning();
+    return rows[0]!;
+  }
+
+  async updateModel(id: number, input: Partial<VehicleModelInput>): Promise<VehicleModel | undefined> {
+    const rows = await this.db
+      .update(vehicleModel)
+      .set({ ...input, updatedAt: new Date() })
+      .where(eq(vehicleModel.id, id))
+      .returning();
+    return rows[0];
+  }
+
+  async deleteModel(id: number): Promise<boolean> {
+    const rows = await this.db
+      .delete(vehicleModel)
+      .where(eq(vehicleModel.id, id))
+      .returning({ id: vehicleModel.id });
+    return rows.length > 0;
+  }
+
+  // ── Admin CRUD — Generations ─────────────────────────────────────────────
+
+  /** Return all generations for a model (active and inactive) — used by admin list. */
+  async findAllGenerationsAdmin(modelId: number): Promise<VehicleGeneration[]> {
+    return this.db
+      .select()
+      .from(vehicleGeneration)
+      .where(eq(vehicleGeneration.vehicleModelId, modelId))
+      .orderBy(vehicleGeneration.yearStart);
+  }
+
+  async createGeneration(input: VehicleGenerationInput): Promise<VehicleGeneration> {
+    const rows = await this.db
+      .insert(vehicleGeneration)
+      .values({
+        vehicleModelId: input.vehicleModelId,
+        name: input.name,
+        yearStart: input.yearStart,
+        yearEnd: input.yearEnd,
+        isActive: input.isActive ?? true,
+      })
+      .returning();
+    return rows[0]!;
+  }
+
+  async updateGeneration(
+    id: number,
+    input: Partial<VehicleGenerationInput>,
+  ): Promise<VehicleGeneration | undefined> {
+    const rows = await this.db
+      .update(vehicleGeneration)
+      .set({ ...input, updatedAt: new Date() })
+      .where(eq(vehicleGeneration.id, id))
+      .returning();
+    return rows[0];
+  }
+
+  async deleteGeneration(id: number): Promise<boolean> {
+    const rows = await this.db
+      .delete(vehicleGeneration)
+      .where(eq(vehicleGeneration.id, id))
+      .returning({ id: vehicleGeneration.id });
+    return rows.length > 0;
   }
 
   // ── Admin CRUD (Handover #2) ────────────────────────────────────────────

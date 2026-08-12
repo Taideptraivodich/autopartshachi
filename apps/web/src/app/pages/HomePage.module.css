@@ -48,6 +48,39 @@
   margin-bottom: var(--space-8);
 }
 
+.heroCtaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  position: relative;
+  z-index: 1;
+}
+
+.heroCtaBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  background: #FFD600;
+  color: var(--color-primary-800);
+  border-radius: var(--radius-md);
+  font-weight: var(--font-semibold);
+  text-decoration: none;
+}
+
+.heroCtaBtnSecondary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: white;
+  border-radius: var(--radius-md);
+  font-weight: var(--font-medium);
+  text-decoration: none;
+}
+
 /* Search placeholder */
 .searchPlaceholder {
   max-width: 640px;

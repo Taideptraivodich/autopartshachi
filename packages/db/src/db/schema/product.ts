@@ -69,6 +69,7 @@ export const product = pgTable(
     description: text("description"),
     specification: text("specification"),
     status: text("status").notNull().default("con_hang"),
+    isVisible: boolean("is_visible").notNull().default(true),
     // --- SEO Preparation fields (02B.2 mission brief, not in 02B data
     // dictionary) — additive columns only, no new business entity/relation.
     metaTitle: text("meta_title"),

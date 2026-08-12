@@ -8,6 +8,7 @@ import "./env.js";
 
 import express from "express";
 import cors from "cors";
+import { join } from "node:path";
 
 import { db } from "autoparts-db";
 import {
@@ -19,6 +20,7 @@ import {
   OemRepository,
   AdminRepository,
   LeadRepository,
+  SiteSettingsRepository,
 } from "autoparts-db/repositories";
 
 import { AuthService } from "./services/auth.service.js";
@@ -30,6 +32,7 @@ import { SearchService } from "./services/search.service.js";
 import { OemService } from "./services/oem.service.js";
 import { AdminProductService } from "./services/admin-product.service.js";
 import { LeadService } from "./services/lead.service.js";
+import { SiteSettingsService } from "./services/settings.service.js";
 
 import { AuthController } from "./controllers/auth.controller.js";
 import { ProductController } from "./controllers/product.controller.js";
@@ -40,6 +43,7 @@ import { SearchController } from "./controllers/search.controller.js";
 import { OemController } from "./controllers/oem.controller.js";
 import { AdminProductController } from "./controllers/admin-product.controller.js";
 import { LeadController } from "./controllers/lead.controller.js";
+import { AdminSettingsController } from "./controllers/admin-settings.controller.js";
 
 import { createAdminRouter } from "./routes/admin.routes.js";
 import { createProductRouter } from "./routes/product.routes.js";
@@ -50,6 +54,12 @@ import { createSearchRouter } from "./routes/search.routes.js";
 import { createOemRouter } from "./routes/oem.routes.js";
 import { createAdminProductRouter } from "./routes/admin-product.routes.js";
 import { createLeadRouter } from "./routes/lead.routes.js";
+import { createSettingsRouter, createAdminSettingsRouter } from "./routes/admin-settings.routes.js";
+import { createAdminBrandRouter } from "./routes/admin-brand.routes.js";
+import { createAdminCategoryRouter } from "./routes/admin-category.routes.js";
+import { createAdminVehicleRouter } from "./routes/admin-vehicle.routes.js";
+import { createAdminLeadRouter } from "./routes/admin-lead.routes.js";
+import { createAdminUploadRouter } from "./routes/admin-upload.routes.js";
 
 import { requireAdmin } from "./middleware/require-admin.js";
 import { logger } from "./lib/logger.js";
@@ -67,6 +77,7 @@ const vehicleRepo = new VehicleRepository(db);
 const searchRepo = new SearchRepository(db);
 const oemRepo = new OemRepository(db);
 const leadRepo = new LeadRepository(db);
+const settingsRepo = new SiteSettingsRepository(db);
 
 // Services
 const authService = new AuthService(adminRepo);
@@ -77,6 +88,7 @@ const vehicleService = new VehicleService(vehicleRepo);
 const searchService = new SearchService(searchRepo);
 const oemService = new OemService(oemRepo);
 const adminProductService = new AdminProductService(productRepo, oemRepo, vehicleRepo);
+const settingsService = new SiteSettingsService(settingsRepo);
 const leadService = new LeadService(
   leadRepo,
   process.env.TELEGRAM_BOT_TOKEN,
@@ -93,6 +105,7 @@ const searchController = new SearchController(searchService);
 const oemController = new OemController(oemService);
 const adminProductController = new AdminProductController(adminProductService, productService);
 const leadController = new LeadController(leadService);
+const adminSettingsController = new AdminSettingsController(settingsService);
 
 // ---------------------------------------------------------------------------
 // Express app
@@ -102,7 +115,10 @@ const app = express();
 const PORT = process.env.API_PORT ?? 3001;
 
 app.use(cors({ origin: ["http://localhost:3000", "http://localhost:5173"] }));
-app.use(express.json());
+app.use(express.json({ limit: "10mb" })); // tăng limit cho base64 ảnh
+
+// Serve uploaded images publicly
+app.use("/uploads", express.static(join(process.cwd(), "public", "uploads")));
 
 // Health check
 app.get("/api/health", (_req, res) => {
@@ -112,8 +128,15 @@ app.get("/api/health", (_req, res) => {
 // Routes — admin (login public, rest protected by requireAdmin middleware)
 app.use("/api", createAdminRouter(authController));
 app.use("/api/admin/san-pham", requireAdmin, createAdminProductRouter(adminProductController));
+app.use("/api/admin/thuong-hieu", requireAdmin, createAdminBrandRouter(brandService));
+app.use("/api/admin/danh-muc", requireAdmin, createAdminCategoryRouter(categoryService));
+app.use("/api/admin/hang-xe", requireAdmin, createAdminVehicleRouter(vehicleService));
+app.use("/api/admin/settings", requireAdmin, createAdminSettingsRouter(adminSettingsController));
+app.use("/api/admin/lead", requireAdmin, createAdminLeadRouter(leadService));
+app.use("/api/admin/upload", requireAdmin, createAdminUploadRouter());
 
 // Routes — public catalog
+app.use("/api", createSettingsRouter(adminSettingsController));
 app.use("/api", createProductRouter(productController));
 app.use("/api", createCategoryRouter(categoryController));
 app.use("/api", createBrandRouter(brandController));

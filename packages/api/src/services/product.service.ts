@@ -25,6 +25,7 @@ export interface ProductListItem {
   name: string;
   sku: string;
   status: string;
+  isVisible: boolean;
   featuredImage: string | null;
   brand: { id: number; name: string; slug: string } | null;
 }
@@ -47,6 +48,10 @@ export interface GetProductListParams {
   sortBy?: "name" | "createdAt";
   sortDir?: "asc" | "desc";
   vehicleGenerationId?: number;
+  /** Free-text search on name/SKU (ILIKE). */
+  q?: string;
+  /** When false, include hidden products. Default true (public). */
+  onlyVisible?: boolean;
 }
 
 /** Chi tiết đầy đủ 1 sản phẩm */
@@ -88,6 +93,7 @@ function mapSummaryToListItem(p: ProductSummary): ProductListItem {
     name: p.name,
     sku: p.sku,
     status: p.status,
+    isVisible: p.isVisible,
     featuredImage: pickFeaturedImage(p.thumbnail),
     brand: p.brand
       ? { id: p.brand.id, name: p.brand.name, slug: p.brand.slug }
@@ -158,6 +164,8 @@ export class ProductService {
         sortBy: params.sortBy ?? "createdAt",
         sortDir: params.sortDir ?? "desc",
         vehicleGenerationId: params.vehicleGenerationId,
+        q: params.q,
+        onlyVisible: params.onlyVisible,
       });
 
     return {

@@ -9,6 +9,7 @@
 import {
   CategoryRepository,
   type Category,
+  type CategoryInput,
 } from "autoparts-db/repositories";
 
 // ---------------------------------------------------------------------------
@@ -22,6 +23,7 @@ export interface CategoryItem {
   slug: string;
   parentCategoryId: number | null;
   displayOrder: number;
+  isActive: boolean;
 }
 
 /** Danh mục chi tiết với children */
@@ -46,6 +48,7 @@ function mapToItem(cat: Category): CategoryItem {
     slug: cat.slug,
     parentCategoryId: cat.parentCategoryId ?? null,
     displayOrder: cat.displayOrder,
+    isActive: cat.isActive ?? true,
   };
 }
 
@@ -70,6 +73,23 @@ export class CategoryService {
    * Bao gồm parent và danh sách children trực tiếp.
    * Trả về null nếu không tìm thấy.
    */
+  // ── Admin CRUD ──────────────────────────────────────────────────────────
+
+  async adminCreate(input: CategoryInput): Promise<Category> {
+    return this.categoryRepo.create(input);
+  }
+
+  async adminUpdate(id: number, input: Partial<CategoryInput>): Promise<Category | null> {
+    const row = await this.categoryRepo.update(id, input);
+    return row ?? null;
+  }
+
+  async adminDelete(id: number): Promise<boolean> {
+    return this.categoryRepo.remove(id);
+  }
+
+  // ── Public ───────────────────────────────────────────────────────────────
+
   async getCategoryBySlug(slug: string): Promise<CategoryDetail | null> {
     const cat = await this.categoryRepo.findBySlug(slug);
     if (!cat) return null;

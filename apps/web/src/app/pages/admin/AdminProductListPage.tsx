@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAdminAuth } from "../../../features/admin/context/AdminAuthContext";
-import { Button, Pagination } from "../../../components/ui";
+import { Button, Pagination, Input, Select } from "../../../components/ui";
 import {
   listProductsAdmin,
   deleteProduct,
+  toggleProductVisibility,
 } from "../../../features/admin/api/admin-product.api";
 import type { ProductListItem } from "../../../features/product/api/types";
 
@@ -13,6 +14,11 @@ const STATUS_LABEL: Record<string, string> = {
   het_hang: "Hết hàng",
   ngung_kinh_doanh: "Ngừng kinh doanh",
 };
+
+const STATUS_OPTIONS = [
+  { value: "", label: "Tất cả trạng thái" },
+  ...Object.entries(STATUS_LABEL).map(([value, label]) => ({ value, label })),
+];
 
 const PAGE_SIZE = 20;
 
@@ -26,12 +32,22 @@ const AdminProductListPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [togglingId, setTogglingId] = useState<number | null>(null);
+
+  const [searchInput, setSearchInput] = useState("");
+  const [q, setQ] = useState("");
+  const [status, setStatus] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const result = await listProductsAdmin({ page, pageSize: PAGE_SIZE });
+      const result = await listProductsAdmin({
+        page,
+        pageSize: PAGE_SIZE,
+        q: q || undefined,
+        status: status || undefined,
+      });
       setItems(result.data);
       setTotal(result.meta.total);
     } catch (err) {
@@ -39,11 +55,36 @@ const AdminProductListPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [page]);
+  }, [page, q, status]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPage(1);
+    setQ(searchInput.trim());
+  };
+
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setPage(1);
+    setStatus(e.target.value);
+  };
+
+  const handleToggleVisibility = async (p: ProductListItem) => {
+    setTogglingId(p.id);
+    try {
+      await toggleProductVisibility(p.id, !p.isVisible);
+      setItems((prev) =>
+        prev.map((it) => (it.id === p.id ? { ...it, isVisible: !it.isVisible } : it)),
+      );
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setTogglingId(null);
+    }
+  };
 
   const handleDelete = async (id: number, name: string) => {
     if (!window.confirm(`Xóa sản phẩm "${name}"? Hành động này không thể hoàn tác.`)) {
@@ -81,6 +122,39 @@ const AdminProductListPage: React.FC = () => {
           </Button>
         </div>
 
+        {/* ── Search + Filter bar ── */}
+        <form onSubmit={handleSearchSubmit} style={styles.filterBar}>
+          <Input
+            placeholder="Tìm theo tên, SKU…"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            style={{ minWidth: 240 }}
+          />
+          <Select
+            options={STATUS_OPTIONS}
+            value={status}
+            onChange={handleStatusChange}
+            style={{ minWidth: 180 }}
+          />
+          <Button variant="secondary" type="submit" size="sm">
+            Tìm
+          </Button>
+          {(q || status) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSearchInput("");
+                setQ("");
+                setStatus("");
+                setPage(1);
+              }}
+            >
+              Xóa bộ lọc
+            </Button>
+          )}
+        </form>
+
         {error && <p style={styles.error}>{error}</p>}
 
         {loading ? (
@@ -96,13 +170,14 @@ const AdminProductListPage: React.FC = () => {
                     <th style={styles.th}>SKU</th>
                     <th style={styles.th}>Thương hiệu</th>
                     <th style={styles.th}>Trạng thái</th>
+                    <th style={styles.th}>Hiển thị</th>
                     <th style={styles.th}>Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
                   {items.length === 0 && (
                     <tr>
-                      <td colSpan={6} style={styles.tdEmpty}>
+                      <td colSpan={7} style={styles.tdEmpty}>
                         Chưa có sản phẩm nào.
                       </td>
                     </tr>
@@ -114,6 +189,22 @@ const AdminProductListPage: React.FC = () => {
                       <td style={styles.td}>{p.sku}</td>
                       <td style={styles.td}>{p.brand?.name ?? "—"}</td>
                       <td style={styles.td}>{STATUS_LABEL[p.status] ?? p.status}</td>
+                      <td style={styles.td}>
+                        <button
+                          title={p.isVisible ? "Đang hiển thị — nhấn để ẩn" : "Đang ẩn — nhấn để hiển thị"}
+                          disabled={togglingId === p.id}
+                          onClick={() => handleToggleVisibility(p)}
+                          style={{
+                            background: "none",
+                            border: "none",
+                            cursor: "pointer",
+                            fontSize: "1.2rem",
+                            opacity: togglingId === p.id ? 0.4 : 1,
+                          }}
+                        >
+                          {p.isVisible ? "👁️" : "🚫"}
+                        </button>
+                      </td>
                       <td style={styles.td}>
                         <div style={styles.actions}>
                           <Button
@@ -167,6 +258,13 @@ const styles: Record<string, React.CSSProperties> = {
     margin: "0.75rem 0 1.5rem",
   },
   error: { color: "#b91c1c", marginBottom: "1rem" },
+  filterBar: {
+    display: "flex",
+    alignItems: "flex-end",
+    gap: "0.75rem",
+    marginBottom: "1.25rem",
+    flexWrap: "wrap" as const,
+  },
   tableWrap: { overflowX: "auto", background: "#fff", borderRadius: 8, border: "1px solid #e5e7eb" },
   table: { width: "100%", borderCollapse: "collapse" },
   th: {

@@ -157,11 +157,8 @@ const VehicleDetailView: React.FC<{ slug: string }> = ({ slug }) => {
       {/* CTA to products */}
       <div className={styles.productCta}>
         <p className={styles.productCtaText}>
-          Tìm phụ tùng tương thích với xe <strong>{brand?.name ?? '...'}</strong>
+          Chọn dòng xe <strong>{brand?.name ?? '...'}</strong> bên dưới, sau đó chọn đời xe để xem phụ tùng tương thích.
         </p>
-        <Link to="/san-pham" className={styles.productCtaLink}>
-          Xem tất cả sản phẩm →
-        </Link>
       </div>
 
       {/* Models */}

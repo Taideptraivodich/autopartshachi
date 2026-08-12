@@ -11,6 +11,7 @@ export interface AdminProductListParams {
   brandId?: number;
   categoryId?: number;
   status?: string;
+  q?: string;
 }
 
 export interface AdminProductImagePayload {
@@ -68,10 +69,21 @@ export async function listProductsAdmin(
   if (params.brandId) qs.set("brandId", String(params.brandId));
   if (params.categoryId) qs.set("categoryId", String(params.categoryId));
   if (params.status) qs.set("status", params.status);
+  if (params.q) qs.set("q", params.q);
 
   const query = qs.toString();
   return adminApiFetch<PaginatedResponse<ProductListItem>>(
     `/admin/san-pham${query ? `?${query}` : ""}`,
+  );
+}
+
+export async function toggleProductVisibility(
+  id: number,
+  isVisible: boolean,
+): Promise<{ data: { id: number; isVisible: boolean } }> {
+  return adminApiFetch<{ data: { id: number; isVisible: boolean } }>(
+    `/admin/san-pham/${id}/visibility`,
+    { method: "PATCH", body: JSON.stringify({ isVisible }) },
   );
 }
 

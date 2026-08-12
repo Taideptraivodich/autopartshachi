@@ -230,4 +230,11 @@ export class AdminProductService {
       compatibility,
     };
   }
+
+  async setVisibility(
+    id: number,
+    isVisible: boolean,
+  ): Promise<{ id: number; isVisible: boolean } | undefined> {
+    return this.productRepo.setVisibility(id, isVisible);
+  }
 }

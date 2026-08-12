@@ -14,5 +14,6 @@ export function createAdminProductRouter(ctrl: AdminProductController): Router {
   r.post("/", ctrl.create.bind(ctrl));
   r.put("/:id", ctrl.update.bind(ctrl));
   r.delete("/:id", ctrl.remove.bind(ctrl));
+  r.patch("/:id/visibility", ctrl.toggleVisibility.bind(ctrl));
   return r;
 }

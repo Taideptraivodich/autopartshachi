@@ -48,6 +48,7 @@ export class AdminProductController {
         rawStatus && (VALID_STATUSES as readonly string[]).includes(rawStatus)
           ? (rawStatus as (typeof VALID_STATUSES)[number])
           : undefined;
+      const q = req.query.q ? String(req.query.q) : undefined;
 
       const result = await this.productService.getProductList({
         page,
@@ -55,6 +56,8 @@ export class AdminProductController {
         brandId,
         categoryId,
         status,
+        q,
+        onlyVisible: false, // admin sees all products including hidden
       });
 
       res.json({
@@ -132,6 +135,31 @@ export class AdminProductController {
       res.status(204).send();
     } catch (err) {
       logger.error("[AdminProductController.remove]", err);
+      res.status(400).json({ error: (err as Error).message });
+    }
+  };
+
+  // PATCH /api/admin/san-pham/:id/visibility
+  toggleVisibility = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = parseId(String(req.params.id ?? ""));
+      if (id === null) {
+        res.status(400).json({ error: "id không hợp lệ" });
+        return;
+      }
+      const { isVisible } = req.body as { isVisible?: unknown };
+      if (typeof isVisible !== "boolean") {
+        res.status(400).json({ error: "isVisible (boolean) is required" });
+        return;
+      }
+      const result = await this.adminProductService.setVisibility(id, isVisible);
+      if (!result) {
+        res.status(404).json({ error: "Not found" });
+        return;
+      }
+      res.json({ data: result });
+    } catch (err) {
+      logger.error("[AdminProductController.toggleVisibility]", err);
       res.status(400).json({ error: (err as Error).message });
     }
   };

@@ -1,4 +1,5 @@
 import type { NavItem } from '../types';
+import { SITE_CONFIG } from './site';
 
 export const NAV_ITEMS: NavItem[] = [
   { label: 'Sản phẩm', href: '/san-pham' },
@@ -16,7 +17,7 @@ export const NAV_ITEMS: NavItem[] = [
   },
   { label: 'Danh mục', href: '/danh-muc' },
   { label: 'Thương hiệu', href: '/thuong-hieu' },
-  { label: 'OEM', href: '/oem' },
+  ...(SITE_CONFIG.showOem ? [{ label: 'OEM', href: '/oem' }] : []),
   { label: 'Blog', href: '/blog' },
   { label: 'Liên hệ', href: '/lien-he' },
 ];
@@ -26,7 +27,7 @@ export const QUICK_LINKS: NavItem[] = [
   { label: 'Hãng xe', href: '/hang-xe' },
   { label: 'Danh mục', href: '/danh-muc' },
   { label: 'Thương hiệu', href: '/thuong-hieu' },
-  { label: 'OEM', href: '/oem' },
+  ...(SITE_CONFIG.showOem ? [{ label: 'OEM', href: '/oem' }] : []),
   { label: 'Blog', href: '/blog' },
   { label: 'Liên hệ', href: '/lien-he' },
 ];

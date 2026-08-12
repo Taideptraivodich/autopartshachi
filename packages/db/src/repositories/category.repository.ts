@@ -8,6 +8,14 @@ import { productCategory } from "../db/schema/product.js";
 
 export type Category = typeof productCategory.$inferSelect;
 
+export interface CategoryInput {
+  name: string;
+  slug: string;
+  parentCategoryId?: number | null;
+  displayOrder?: number;
+  isActive?: boolean;
+}
+
 // ---------------------------------------------------------------------------
 // CategoryRepository
 // ---------------------------------------------------------------------------
@@ -64,5 +72,36 @@ export class CategoryRepository {
       .limit(1);
 
     return rows[0];
+  }
+
+  async create(input: CategoryInput): Promise<Category> {
+    const rows = await this.db
+      .insert(productCategory)
+      .values({
+        name: input.name,
+        slug: input.slug,
+        parentCategoryId: input.parentCategoryId ?? null,
+        displayOrder: input.displayOrder ?? 0,
+        isActive: input.isActive ?? true,
+      })
+      .returning();
+    return rows[0]!;
+  }
+
+  async update(id: number, input: Partial<CategoryInput>): Promise<Category | undefined> {
+    const rows = await this.db
+      .update(productCategory)
+      .set({ ...input, updatedAt: new Date() })
+      .where(eq(productCategory.id, id))
+      .returning();
+    return rows[0];
+  }
+
+  async remove(id: number): Promise<boolean> {
+    const rows = await this.db
+      .delete(productCategory)
+      .where(eq(productCategory.id, id))
+      .returning({ id: productCategory.id });
+    return rows.length > 0;
   }
 }

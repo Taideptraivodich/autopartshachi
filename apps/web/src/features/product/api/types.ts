@@ -34,6 +34,7 @@ export interface ProductListItem {
   name: string;
   sku: string;
   status: string;
+  isVisible?: boolean;
   featuredImage: string | null;
   brand: ProductBrandSummary | null;
   categories: CategorySummary[];

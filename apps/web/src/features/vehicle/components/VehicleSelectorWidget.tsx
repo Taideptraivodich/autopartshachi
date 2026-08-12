@@ -39,38 +39,35 @@ const VehicleSelectorWidget: React.FC<VehicleSelectorWidgetProps> = ({
   const [loadingModels, setLoadingModels] = useState(false);
   const [loadingGens, setLoadingGens] = useState(false);
 
-  // Mount: load saved vehicle + brands
+  // Mount: load brands + restore saved vehicle state
   useEffect(() => {
+    fetchAllVehicleBrands()
+      .then((res) => setBrands(res.data))
+      .catch(console.error);
+
     const saved = getSelected();
-    if (saved) {
-      setCurrentVehicle(saved);
-      setSelectedBrandId(saved.brandId);
-      setSelectedModelId(saved.modelId);
-      setSelectedGenId(saved.generationId);
-    }
+    if (!saved) return;
 
-    fetchAllVehicleBrands().then((res) => setBrands(res.data)).catch(console.error);
-  }, []);
+    // Restore saved vehicle — load models and generations sequentially
+    setCurrentVehicle(saved);
+    setSelectedBrandId(saved.brandId);
+    setSelectedModelId(saved.modelId);
+    setSelectedGenId(saved.generationId);
 
-  // When saved brandId is set, load models for pre-populate
-  useEffect(() => {
-    if (selectedBrandId === "") return;
     setLoadingModels(true);
-    fetchModelsByBrandId(selectedBrandId as number)
-      .then((res) => setModels(res.data))
-      .catch(console.error)
-      .finally(() => setLoadingModels(false));
-  }, [selectedBrandId]);
-
-  // When saved modelId is set, load generations for pre-populate
-  useEffect(() => {
-    if (selectedModelId === "") return;
-    setLoadingGens(true);
-    fetchVehicleGenerationsByModelId(selectedModelId as number)
+    fetchModelsByBrandId(saved.brandId)
+      .then((res) => {
+        setModels(res.data);
+        return fetchVehicleGenerationsByModelId(saved.modelId);
+      })
       .then((res) => setGenerations(res.data))
       .catch(console.error)
-      .finally(() => setLoadingGens(false));
-  }, [selectedModelId]);
+      .finally(() => {
+        setLoadingModels(false);
+        setLoadingGens(false);
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleBrandChange = useCallback(
     async (brandIdStr: string) => {

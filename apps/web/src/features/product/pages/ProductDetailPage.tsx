@@ -2,19 +2,29 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import MetaTags from '../../../components/ui/MetaTags';
 import Breadcrumb from '../../../components/ui/Breadcrumb';
-import Modal from '../../../components/ui/Modal';
 import { Skeleton, SkeletonText } from '../../../components/ui';
 import ProductGallery from '../components/ProductGallery';
 import OEMBlock from '../components/OEMBlock';
 import CompatibilityBlock from '../components/CompatibilityBlock';
-import ContactQuickForm from '../components/ContactQuickForm';
 import { fetchProductBySlug } from '../api/product.api';
 import RelatedProducts from '../components/RelatedProducts';
 import type { ProductDetail } from '../api/types';
+import { SITE_CONFIG } from '../../../constants/site';
 import styles from './ProductDetailPage.module.css';
 
 // SĐT tư vấn — thay bằng số thực của Hachi
 const HACHI_PHONE = '+84901234567';
+
+function buildZaloOrderLink(product: ProductDetail, quantity: number): { url: string; message: string } {
+  const message =
+    `Tôi muốn hỏi về sản phẩm: ${product.name} (SKU: ${product.sku})\n` +
+    `Số lượng: ${quantity}\n` +
+    `---\n` +
+    `(Vui lòng cho biết số lượng và địa chỉ nhận hàng để được báo giá)`;
+  const zaloPhone = SITE_CONFIG.zaloPhone.replace(/\D/g, '');
+  const url = `https://zalo.me/${zaloPhone}?text=${encodeURIComponent(message)}`;
+  return { url, message };
+}
 
 const STATUS_LABEL: Record<string, string> = {
   con_hang: 'Còn hàng',
@@ -28,7 +38,8 @@ const ProductDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
-  const [contactOpen, setContactOpen] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [copiedHint, setCopiedHint] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
@@ -199,6 +210,34 @@ const ProductDetailPage: React.FC = () => {
                 </>
               )}
 
+              {/* Quantity selector */}
+              <div className={styles.quantityRow}>
+                <label htmlFor="product-quantity" className={styles.metaLabel}>Số lượng</label>
+                <div className={styles.quantityStepper}>
+                  <button
+                    type="button"
+                    aria-label="Giảm số lượng"
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  >
+                    −
+                  </button>
+                  <input
+                    id="product-quantity"
+                    type="number"
+                    min={1}
+                    value={quantity}
+                    onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))}
+                  />
+                  <button
+                    type="button"
+                    aria-label="Tăng số lượng"
+                    onClick={() => setQuantity((q) => q + 1)}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
               {/* CTA block */}
               <div className={styles.ctaBlock}>
                 <a
@@ -209,37 +248,36 @@ const ProductDetailPage: React.FC = () => {
                 </a>
                 <button
                   className={styles.ctaContactBtn}
-                  onClick={() => setContactOpen(true)}
+                  onClick={async () => {
+                    const { url, message } = buildZaloOrderLink(product, quantity);
+                    try {
+                      await navigator.clipboard.writeText(message);
+                      setCopiedHint(true);
+                      setTimeout(() => setCopiedHint(false), 3000);
+                    } catch {
+                      // clipboard API có thể bị chặn — vẫn mở Zalo bình thường
+                    }
+                    window.open(url, '_blank', 'noopener,noreferrer');
+                  }}
                 >
-                  💬 Liên hệ đặt hàng
+                  💬 Đặt hàng qua Zalo
                 </button>
+                {copiedHint && (
+                  <p className={styles.copiedHint}>Đã copy nội dung, paste vào Zalo nhé!</p>
+                )}
               </div>
             </div>
           </div>
 
           {/* OEM + Compatibility sections */}
           <div className={styles.sections}>
-            <OEMBlock codes={product.oemCodes} />
+            {SITE_CONFIG.showOem && <OEMBlock codes={product.oemCodes} />}
             <CompatibilityBlock entries={product.compatibility} />
           </div>
 
           <RelatedProducts currentSlug={product.slug} />
         </div>
       </div>
-
-      {/* Modal liên hệ nhanh */}
-      <Modal
-        open={contactOpen}
-        onClose={() => setContactOpen(false)}
-        title="Liên hệ đặt hàng"
-        size="sm"
-      >
-        <ContactQuickForm
-          productName={product.name}
-          productSku={product.sku}
-          onSuccess={() => setContactOpen(false)}
-        />
-      </Modal>
     </>
   );
 };

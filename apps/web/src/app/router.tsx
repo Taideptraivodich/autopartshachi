@@ -3,6 +3,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { PublicLayout } from "../components/layout";
 import { PageLoader } from "../components/ui/Skeleton";
 import AdminRoute from "./AdminRoute";
+import { SITE_CONFIG } from "../constants/site";
 
 // Lazy-loaded pages for code splitting
 const HomePage = lazy(() => import("./pages/HomePage"));
@@ -20,6 +21,11 @@ const AdminLoginPage = lazy(() => import("./pages/admin/AdminLoginPage"));
 const AdminDashboardPage = lazy(() => import("./pages/admin/AdminDashboardPage"));
 const AdminProductListPage = lazy(() => import("./pages/admin/AdminProductListPage"));
 const AdminProductFormPage = lazy(() => import("./pages/admin/AdminProductFormPage"));
+const AdminBrandListPage = lazy(() => import("./pages/admin/AdminBrandListPage"));
+const AdminCategoryListPage = lazy(() => import("./pages/admin/AdminCategoryListPage"));
+const AdminSettingsPage = lazy(() => import("./pages/admin/AdminSettingsPage"));
+const AdminVehicleBrandListPage = lazy(() => import("./pages/admin/AdminVehicleBrandListPage"));
+const AdminLeadListPage = lazy(() => import("./pages/admin/AdminLeadListPage"));
 
 // Agent 03 – Product Catalog
 const SanPhamPage = lazy(
@@ -46,6 +52,11 @@ const router = createBrowserRouter([
       { path: "san-pham", element: <AdminProductListPage /> },
       { path: "san-pham/moi", element: <AdminProductFormPage /> },
       { path: "san-pham/:id/sua", element: <AdminProductFormPage /> },
+      { path: "thuong-hieu", element: <AdminBrandListPage /> },
+      { path: "danh-muc", element: <AdminCategoryListPage /> },
+      { path: "hang-xe", element: <AdminVehicleBrandListPage /> },
+      { path: "cai-dat", element: <AdminSettingsPage /> },
+      { path: "lead", element: <AdminLeadListPage /> },
     ],
   },
   // ── Public site ───────────────────────────────────────────────────────────
@@ -65,7 +76,7 @@ const router = createBrowserRouter([
       { path: "thuong-hieu", element: <ThuongHieuPage /> },
       { path: "thuong-hieu/:slug", element: <ThuongHieuPage /> },
       { path: "tim-kiem", element: <SearchPage /> },
-      { path: "oem", element: <OemPage /> },
+      ...(SITE_CONFIG.showOem ? [{ path: "oem", element: <OemPage /> }] : []),
       { path: "blog", element: <BlogPage /> },
       { path: "blog/:slug", element: <BlogPage /> },
       { path: "lien-he", element: <LienHePage /> },

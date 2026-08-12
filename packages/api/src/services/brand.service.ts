@@ -3,7 +3,7 @@
  * Business logic cho thương hiệu phụ tùng (product_brand).
  */
 
-import { BrandRepository, type Brand } from 'autoparts-db/repositories';
+import { BrandRepository, type Brand, type BrandInput } from 'autoparts-db/repositories';
 import { ProductRepository, type ProductSummary } from 'autoparts-db/repositories';
 
 export interface BrandItem {
@@ -47,6 +47,27 @@ export class BrandService {
     if (!brand) return null;
     return mapBrand(brand);
   }
+
+  // ── Admin CRUD ──────────────────────────────────────────────────────────
+
+  async adminListBrands(): Promise<Brand[]> {
+    return this.brandRepo.findAllAdmin();
+  }
+
+  async adminCreateBrand(input: BrandInput): Promise<Brand> {
+    return this.brandRepo.create(input);
+  }
+
+  async adminUpdateBrand(id: number, input: Partial<BrandInput>): Promise<Brand | null> {
+    const row = await this.brandRepo.update(id, input);
+    return row ?? null;
+  }
+
+  async adminDeleteBrand(id: number): Promise<boolean> {
+    return this.brandRepo.remove(id);
+  }
+
+  // ── Public ───────────────────────────────────────────────────────────────
 
   async getProductsByBrand(
     slug: string,

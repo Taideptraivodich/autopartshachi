@@ -16,6 +16,7 @@ import {
   fetchVehicleBrandBySlug,
   fetchVehicleGenerationsByModelId,
 } from "../../../features/product/api/product.api";
+import { uploadImage } from "../../../features/admin/api/admin-catalog.api";
 import type {
   BrandListItem,
   CategoryListItem,
@@ -92,6 +93,7 @@ const AdminProductFormPage: React.FC = () => {
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
 
   const slugPreview = useMemo(() => slugifyPreview(name), [name]);
 
@@ -172,6 +174,19 @@ const AdminProductFormPage: React.FC = () => {
   };
   const setThumbnail = (idx: number) => {
     setImages((prev) => prev.map((img, i) => ({ ...img, isThumbnail: i === idx })));
+  };
+
+  const handleFileSelect = async (idx: number, file: File) => {
+    setUploadingIdx(idx);
+    setError(null);
+    try {
+      const url = await uploadImage(file);
+      updateImage(idx, { imageUrl: `http://localhost:3001${url}` });
+    } catch (e) {
+      setError(`Upload ảnh thất bại: ${(e as Error).message}`);
+    } finally {
+      setUploadingIdx(null);
+    }
   };
 
   // ── compatibility rows ───────────────────────────────────────────────
@@ -388,11 +403,38 @@ const AdminProductFormPage: React.FC = () => {
               {images.map((img, idx) => (
                 <div key={idx} style={styles.imageRow}>
                   <div style={{ flex: 1 }}>
-                    <Input
-                      placeholder="Dán URL ảnh — không hỗ trợ upload file trực tiếp"
-                      value={img.imageUrl}
-                      onChange={(e) => updateImage(idx, { imageUrl: e.target.value })}
-                    />
+                    <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                      <Input
+                        placeholder="Dán URL ảnh hoặc tải lên từ máy →"
+                        value={img.imageUrl}
+                        onChange={(e) => updateImage(idx, { imageUrl: e.target.value })}
+                        style={{ flex: 1 }}
+                      />
+                      {/* Nút upload file ẩn input[type=file] */}
+                      <label style={styles.uploadBtn} title="Chọn ảnh từ máy tính">
+                        {uploadingIdx === idx ? "⏳" : "📁"}
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,image/gif"
+                          style={{ display: "none" }}
+                          disabled={uploadingIdx !== null}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleFileSelect(idx, file);
+                            e.target.value = ""; // reset để chọn lại cùng file
+                          }}
+                        />
+                      </label>
+                    </div>
+                    {img.imageUrl && (
+                      <img
+                        src={img.imageUrl}
+                        alt="preview"
+                        style={styles.imgPreview}
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                        onLoad={(e) => { (e.target as HTMLImageElement).style.display = "block"; }}
+                      />
+                    )}
                   </div>
                   <Checkbox
                     label="Ảnh đại diện"
@@ -513,7 +555,14 @@ const styles: Record<string, React.CSSProperties> = {
     gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
     gap: "0.5rem",
   },
-  imageRow: { display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.75rem" },
+  imageRow: { display: "flex", alignItems: "flex-start", gap: "0.75rem", marginBottom: "0.75rem" },
+  uploadBtn: {
+    display: "inline-flex", alignItems: "center", justifyContent: "center",
+    width: 36, height: 36, borderRadius: 6, border: "1px solid #d1d5db",
+    background: "#f9fafb", cursor: "pointer", fontSize: "1rem", flexShrink: 0,
+    userSelect: "none" as const,
+  },
+  imgPreview: { display: "none", marginTop: "0.5rem", maxHeight: 80, maxWidth: 120, borderRadius: 4, border: "1px solid #e5e7eb", objectFit: "cover" as const },
   compatRow: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr 1fr 1fr auto",
