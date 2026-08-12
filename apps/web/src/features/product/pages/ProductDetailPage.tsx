@@ -9,7 +9,6 @@ import CompatibilityBlock from '../components/CompatibilityBlock';
 import { fetchProductBySlug } from '../api/product.api';
 import RelatedProducts from '../components/RelatedProducts';
 import type { ProductDetail } from '../api/types';
-import { SITE_CONFIG } from '../../../constants/site';
 import { useSiteSettings } from '../../../context/SiteSettingsContext';
 import styles from './ProductDetailPage.module.css';
 
@@ -20,8 +19,7 @@ function buildZaloOrderLink(product: ProductDetail, quantity: number, zaloPhone:
     `---\n` +
     `(Vui lòng cho biết số lượng và địa chỉ nhận hàng để được báo giá)`;
   const phone = zaloPhone.replace(/\D/g, '');
-  const url = `https://zalo.me/${phone}?text=${encodeURIComponent(message)}`;
-  return { url, message };
+  return { url: `https://zalo.me/${phone}?text=${encodeURIComponent(message)}`, message };
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -50,17 +48,13 @@ const ProductDetailPage: React.FC = () => {
 
     fetchProductBySlug(slug)
       .then((res) => {
-        if (cancelled) return;
-        setProduct(res.data);
+        if (!cancelled) setProduct(res.data);
       })
       .catch((err: unknown) => {
         if (cancelled) return;
         const msg = err instanceof Error ? err.message : 'Lỗi tải dữ liệu';
-        if (msg.includes('404') || msg.toLowerCase().includes('không tìm thấy')) {
-          setNotFound(true);
-        } else {
-          setError(msg);
-        }
+        if (msg.includes('404') || msg.toLowerCase().includes('không tìm thấy')) setNotFound(true);
+        else setError(msg);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -86,29 +80,14 @@ const ProductDetailPage: React.FC = () => {
     );
   }
 
-  if (notFound) {
+  if (notFound || error) {
     return (
       <div className="container">
         <div className={styles.page}>
           <div className={styles.errorState}>
-            <div className={styles.errorIcon}>🔍</div>
-            <p><strong>Không tìm thấy sản phẩm.</strong></p>
-            <p>Sản phẩm này có thể đã bị xóa hoặc URL không chính xác.</p>
-            <Link to="/san-pham" className={styles.backLink}>← Xem tất cả sản phẩm</Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="container">
-        <div className={styles.page}>
-          <div className={styles.errorState}>
-            <div className={styles.errorIcon}>⚠️</div>
-            <p><strong>Không thể tải thông tin sản phẩm.</strong></p>
-            <p>{error}</p>
+            <div className={styles.errorIcon} aria-hidden="true" />
+            <p><strong>{notFound ? 'Không tìm thấy sản phẩm.' : 'Không thể tải thông tin sản phẩm.'}</strong></p>
+            <p>{notFound ? 'Sản phẩm này có thể đã bị xóa hoặc URL không chính xác.' : error}</p>
             <Link to="/san-pham" className={styles.backLink}>← Xem tất cả sản phẩm</Link>
           </div>
         </div>
@@ -121,9 +100,7 @@ const ProductDetailPage: React.FC = () => {
   const breadcrumbItems = [
     { label: 'Trang chủ', href: '/' },
     { label: 'Sản phẩm', href: '/san-pham' },
-    ...(product.categories[0]
-      ? [{ label: product.categories[0].name, href: `/danh-muc/${product.categories[0].slug}` }]
-      : []),
+    ...(product.categories[0] ? [{ label: product.categories[0].name, href: `/danh-muc/${product.categories[0].slug}` }] : []),
     { label: product.name },
   ];
 
@@ -137,38 +114,25 @@ const ProductDetailPage: React.FC = () => {
 
       <div className="container">
         <div className={styles.page}>
-          <div className={styles.breadcrumbRow}>
-            <Breadcrumb items={breadcrumbItems} />
-          </div>
+          <div className={styles.breadcrumbRow}><Breadcrumb items={breadcrumbItems} /></div>
 
-          {/* Main 2-column layout */}
           <div className={styles.layout}>
-            {/* Gallery */}
             <div className={styles.galleryCol}>
               <ProductGallery images={product.images} productName={product.name} />
             </div>
 
-            {/* Info */}
             <div className={styles.infoCol}>
               <div className={styles.infoTop}>
                 <h1 className={styles.productName}>{product.name}</h1>
 
-                {/* Categories */}
                 {product.categories.length > 0 && (
                   <div className={styles.categories}>
                     {product.categories.map((cat) => (
-                      <Link
-                        key={cat.id}
-                        to={`/danh-muc/${cat.slug}`}
-                        className={styles.catTag}
-                      >
-                        {cat.name}
-                      </Link>
+                      <Link key={cat.id} to={`/danh-muc/${cat.slug}`} className={styles.catTag}>{cat.name}</Link>
                     ))}
                   </div>
                 )}
 
-                {/* Meta row */}
                 <div className={styles.meta}>
                   <div className={styles.metaItem}>
                     <span className={styles.metaLabel}>SKU</span>
@@ -190,60 +154,31 @@ const ProductDetailPage: React.FC = () => {
               </div>
 
               {product.description && (
-                <>
-                  <hr className={styles.divider} />
-                  <div className={styles.descSection}>
-                    <p className={styles.sectionTitle}>Mô tả sản phẩm</p>
-                    <p className={styles.description}>{product.description}</p>
-                  </div>
-                </>
+                <div className={styles.descSection}>
+                  <p className={styles.sectionTitle}>Mô tả sản phẩm</p>
+                  <p className={styles.description}>{product.description}</p>
+                </div>
               )}
 
               {product.specification && (
-                <>
-                  <hr className={styles.divider} />
-                  <div className={styles.descSection}>
-                    <p className={styles.sectionTitle}>Thông số kỹ thuật</p>
-                    <p className={styles.description}>{product.specification}</p>
-                  </div>
-                </>
+                <div className={styles.descSection}>
+                  <p className={styles.sectionTitle}>Thông số kỹ thuật</p>
+                  <p className={styles.description}>{product.specification}</p>
+                </div>
               )}
 
-              {/* Quantity selector */}
               <div className={styles.quantityRow}>
                 <label htmlFor="product-quantity" className={styles.metaLabel}>Số lượng</label>
                 <div className={styles.quantityStepper}>
-                  <button
-                    type="button"
-                    aria-label="Giảm số lượng"
-                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  >
-                    −
-                  </button>
-                  <input
-                    id="product-quantity"
-                    type="number"
-                    min={1}
-                    value={quantity}
-                    onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))}
-                  />
-                  <button
-                    type="button"
-                    aria-label="Tăng số lượng"
-                    onClick={() => setQuantity((q) => q + 1)}
-                  >
-                    +
-                  </button>
+                  <button type="button" aria-label="Giảm số lượng" onClick={() => setQuantity((q) => Math.max(1, q - 1))}>−</button>
+                  <input id="product-quantity" type="number" min={1} value={quantity} onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))} />
+                  <button type="button" aria-label="Tăng số lượng" onClick={() => setQuantity((q) => q + 1)}>+</button>
                 </div>
               </div>
 
-              {/* CTA block */}
               <div className={styles.ctaBlock}>
-                <a
-                  href={`tel:${siteSettings.phone}`}
-                  className={styles.ctaCallBtn}
-                >
-                  📞 Gọi ngay tư vấn
+                <a href={`tel:${siteSettings.phone}`} className={styles.ctaCallBtn}>
+                  Gọi ngay tư vấn <span aria-hidden="true">→</span>
                 </a>
                 <button
                   className={styles.ctaContactBtn}
@@ -254,21 +189,18 @@ const ProductDetailPage: React.FC = () => {
                       setCopiedHint(true);
                       setTimeout(() => setCopiedHint(false), 3000);
                     } catch {
-                      // clipboard API có thể bị chặn — vẫn mở Zalo bình thường
+                      // Clipboard có thể bị chặn; vẫn mở Zalo.
                     }
                     window.open(url, '_blank', 'noopener,noreferrer');
                   }}
                 >
-                  💬 Đặt hàng qua Zalo
+                  Đặt hàng qua Zalo <span aria-hidden="true">→</span>
                 </button>
-                {copiedHint && (
-                  <p className={styles.copiedHint}>Đã copy nội dung, paste vào Zalo nhé!</p>
-                )}
+                {copiedHint && <p className={styles.copiedHint}>Đã copy nội dung, paste vào Zalo nhé!</p>}
               </div>
             </div>
           </div>
 
-          {/* OEM + Compatibility sections */}
           <div className={styles.sections}>
             {siteSettings.showOem && <OEMBlock codes={product.oemCodes} />}
             <CompatibilityBlock entries={product.compatibility} />
