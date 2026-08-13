@@ -14,11 +14,6 @@ import {
   type ProductDetail,
 } from "autoparts-db/repositories";
 
-// ---------------------------------------------------------------------------
-// Types trả về cho Controller / API
-// ---------------------------------------------------------------------------
-
-/** Item trong danh sách sản phẩm — đủ để render card */
 export interface ProductListItem {
   id: number;
   slug: string;
@@ -30,7 +25,6 @@ export interface ProductListItem {
   brand: { id: number; name: string; slug: string } | null;
 }
 
-/** Kết quả phân trang cho danh sách sản phẩm */
 export interface ProductListResult {
   items: ProductListItem[];
   total: number;
@@ -38,7 +32,6 @@ export interface ProductListResult {
   pageSize: number;
 }
 
-/** Tham số lọc + phân trang cho danh sách sản phẩm */
 export interface GetProductListParams {
   page?: number;
   pageSize?: number;
@@ -47,14 +40,12 @@ export interface GetProductListParams {
   status?: "con_hang" | "het_hang" | "ngung_kinh_doanh";
   sortBy?: "name" | "createdAt";
   sortDir?: "asc" | "desc";
-  vehicleGenerationId?: number;
-  /** Free-text search on name/SKU (ILIKE). */
+  vehicleModelId?: number;
+  vehicleYear?: number;
   q?: string;
-  /** When false, include hidden products. Default true (public). */
   onlyVisible?: boolean;
 }
 
-/** Chi tiết đầy đủ 1 sản phẩm */
 export interface ProductDetailResult {
   id: number;
   slug: string;
@@ -87,7 +78,6 @@ export interface ProductDetailResult {
     brandSlug: string;
     modelName: string;
     modelSlug: string;
-    generationName: string;
     yearStart: number;
     yearEnd: number | null;
     installationPosition: string;
@@ -95,13 +85,7 @@ export interface ProductDetailResult {
   }[];
 }
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function pickFeaturedImage(
-  thumbnail: { imageUrl: string } | null,
-): string | null {
+function pickFeaturedImage(thumbnail: { imageUrl: string } | null): string | null {
   return thumbnail?.imageUrl ?? null;
 }
 
@@ -114,19 +98,13 @@ function mapSummaryToListItem(p: ProductSummary): ProductListItem {
     status: p.status,
     isVisible: p.isVisible,
     featuredImage: pickFeaturedImage(p.thumbnail),
-    brand: p.brand
-      ? { id: p.brand.id, name: p.brand.name, slug: p.brand.slug }
-      : null,
+    brand: p.brand ? { id: p.brand.id, name: p.brand.name, slug: p.brand.slug } : null,
   };
 }
 
 function mapDetailToResult(p: ProductDetail): ProductDetailResult {
   const thumbnail = p.images.find((img) => img.isThumbnail);
-  const featuredImage =
-    thumbnail?.imageUrl ??
-    [...p.images].sort((a, b) => a.displayOrder - b.displayOrder)[0]
-      ?.imageUrl ??
-    null;
+  const featuredImage = thumbnail?.imageUrl ?? [...p.images].sort((a, b) => a.displayOrder - b.displayOrder)[0]?.imageUrl ?? null;
 
   return {
     id: p.id,
@@ -139,9 +117,7 @@ function mapDetailToResult(p: ProductDetail): ProductDetailResult {
     metaTitle: p.metaTitle ?? null,
     metaDescription: p.metaDescription ?? null,
     featuredImage,
-    brand: p.brand
-      ? { id: p.brand.id, name: p.brand.name, slug: p.brand.slug }
-      : null,
+    brand: p.brand ? { id: p.brand.id, name: p.brand.name, slug: p.brand.slug } : null,
     images: [...p.images]
       .sort((a, b) => a.displayOrder - b.displayOrder)
       .map((img) => ({
@@ -164,7 +140,6 @@ function mapDetailToResult(p: ProductDetail): ProductDetailResult {
       brandSlug: c.brandSlug,
       modelName: c.modelName,
       modelSlug: c.modelSlug,
-      generationName: c.generationName,
       yearStart: c.yearStart,
       yearEnd: c.yearEnd,
       installationPosition: c.installationPosition,
@@ -173,38 +148,27 @@ function mapDetailToResult(p: ProductDetail): ProductDetailResult {
   };
 }
 
-// ---------------------------------------------------------------------------
-// ProductService
-// ---------------------------------------------------------------------------
-
 export class ProductService {
   constructor(
     private readonly productRepo: ProductRepository,
-    // categoryRepo được inject để có thể dùng sau này (resolve slug → id)
     private readonly _categoryRepo: CategoryRepository,
   ) {}
 
-  /**
-   * Lấy danh sách sản phẩm có phân trang + lọc.
-   */
-  async getProductList(
-    params: GetProductListParams = {},
-  ): Promise<ProductListResult> {
+  async getProductList(params: GetProductListParams = {}): Promise<ProductListResult> {
     const { page = 1, pageSize = 24, brandId, categoryId, status } = params;
-
-    const result: PaginatedResult<ProductSummary> =
-      await this.productRepo.findMany({
-        page,
-        pageSize,
-        brandId,
-        categoryId,
-        status,
-        sortBy: params.sortBy ?? "createdAt",
-        sortDir: params.sortDir ?? "desc",
-        vehicleGenerationId: params.vehicleGenerationId,
-        q: params.q,
-        onlyVisible: params.onlyVisible,
-      });
+    const result: PaginatedResult<ProductSummary> = await this.productRepo.findMany({
+      page,
+      pageSize,
+      brandId,
+      categoryId,
+      status,
+      sortBy: params.sortBy ?? "createdAt",
+      sortDir: params.sortDir ?? "desc",
+      vehicleModelId: params.vehicleModelId,
+      vehicleYear: params.vehicleYear,
+      q: params.q,
+      onlyVisible: params.onlyVisible,
+    });
 
     return {
       items: result.data.map(mapSummaryToListItem),
@@ -214,27 +178,16 @@ export class ProductService {
     };
   }
 
-  /**
-   * Lấy chi tiết sản phẩm theo slug.
-   * Trả về null nếu không tìm thấy.
-   */
   async getProductBySlug(slug: string): Promise<ProductDetailResult | null> {
     const detail = await this.productRepo.findBySlug(slug);
     if (!detail) return null;
     return mapDetailToResult(detail);
   }
 
-  /**
-   * Lấy sản phẩm liên quan — sản phẩm mới nhất, loại trừ sản phẩm hiện tại.
-   */
-  async getRelatedProducts(
-    currentSlug: string,
-    limit = 8,
-  ): Promise<ProductListItem[]> {
+  async getRelatedProducts(currentSlug: string, limit = 8): Promise<ProductListItem[]> {
     const current = await this.productRepo.findBySlug(currentSlug);
     if (!current) return [];
 
-    // Lấy thêm 1 để bù trừ việc loại trừ sản phẩm hiện tại
     const result = await this.productRepo.findMany({
       page: 1,
       pageSize: limit + 1,
@@ -242,9 +195,6 @@ export class ProductService {
       sortDir: "desc",
     });
 
-    return result.data
-      .filter((p) => p.id !== current.id)
-      .slice(0, limit)
-      .map(mapSummaryToListItem);
+    return result.data.filter((p) => p.id !== current.id).slice(0, limit).map(mapSummaryToListItem);
   }
 }
