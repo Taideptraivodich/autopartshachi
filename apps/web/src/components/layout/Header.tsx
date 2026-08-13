@@ -164,8 +164,7 @@ const Header: React.FC = () => {
       <div className={`container ${styles.inner}`}>
         {/* Logo */}
         <Link to="/" className={styles.logo} aria-label={`${SITE_CONFIG.name} – Trang chủ`}>
-          <span className={styles.logoIcon} aria-hidden="true">⚙</span>
-          <span className={styles.logoText}>{SITE_CONFIG.name}</span>
+		<img src="/logo.png" alt={SITE_CONFIG.name} style={{ height: 48, width: "auto", objectFit: "contain", display: "block" }} />
         </Link>
 
         {/* Desktop nav */}

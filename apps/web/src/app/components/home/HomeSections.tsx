@@ -22,8 +22,8 @@ export const HeroSection: React.FC = () => (
         <div className={styles.heroCopy}>
           <p className={styles.heroKicker}>HACHI / AUTOMOTIVE PARTS</p>
           <h1 className={styles.heroTitle}>
-            Phụ tùng đúng xe.<br />
-            <span>Đúng mã.</span>
+            Phụ tùng ô tô.<br />
+            <span>Giá tốt, giao nhanh.</span>
           </h1>
           <p className={styles.heroSubtitle}>
             Khám phá phụ tùng theo hãng xe, đời xe hoặc mã OEM trong một không gian mua sắm gọn gàng, dễ tra cứu.

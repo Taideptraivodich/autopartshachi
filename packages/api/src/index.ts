@@ -156,7 +156,7 @@ app.use((_req, res) => {
 // Start
 // ---------------------------------------------------------------------------
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   logger.info(`Server chạy tại http://localhost:${PORT}`);
   logger.info(`Health: http://localhost:${PORT}/api/health`);
 });
