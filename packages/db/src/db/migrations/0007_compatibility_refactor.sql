@@ -8,7 +8,7 @@ ALTER TABLE "compatibility"
 
 UPDATE "compatibility" c
 SET
-  "vehicle_model_id" = vg."model_id",
+  "vehicle_model_id" = vg."vehicle_model_id",
   "year_start" = vg."year_start",
   "year_end" = vg."year_end"
 FROM "vehicle_generation" vg
