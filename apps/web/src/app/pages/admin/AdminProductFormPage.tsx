@@ -14,7 +14,6 @@ import {
   fetchAllCategories,
   fetchAllVehicleBrands,
   fetchVehicleBrandBySlug,
-  fetchVehicleGenerationsByModelId,
 } from "../../../features/product/api/product.api";
 import { uploadImage } from "../../../features/admin/api/admin-catalog.api";
 import type {
@@ -22,7 +21,6 @@ import type {
   CategoryListItem,
   VehicleBrandListItem,
   VehicleModelItem,
-  VehicleGenerationItem,
 } from "../../../features/product/api/types";
 
 const STATUS_OPTIONS = [
@@ -56,8 +54,9 @@ interface CompatibilityRow {
   vehicleBrandId: string;
   models: VehicleModelItem[];
   vehicleModelId: string;
-  generations: VehicleGenerationItem[];
-  vehicleGenerationId: string;
+  yearStart: string;
+  yearEnd: string;
+  untilNow: boolean;
   installationPosition: string;
 }
 
@@ -73,12 +72,10 @@ const AdminProductFormPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const isEdit = !!id;
 
-  // ── reference data ─────────────────────────────────────────────────────
   const [brands, setBrands] = useState<BrandListItem[]>([]);
   const [categories, setCategories] = useState<CategoryListItem[]>([]);
   const [vehicleBrands, setVehicleBrands] = useState<VehicleBrandListItem[]>([]);
 
-  // ── form state ────────────────────────────────────────────────────────
   const [name, setName] = useState("");
   const [sku, setSku] = useState("");
   const [productBrandId, setProductBrandId] = useState("");
@@ -97,7 +94,6 @@ const AdminProductFormPage: React.FC = () => {
 
   const slugPreview = useMemo(() => slugifyPreview(name), [name]);
 
-  // ── load reference data ──────────────────────────────────────────────
   useEffect(() => {
     (async () => {
       try {
@@ -115,7 +111,6 @@ const AdminProductFormPage: React.FC = () => {
     })();
   }, []);
 
-  // ── load existing product when editing ───────────────────────────────
   useEffect(() => {
     if (!id) return;
     (async () => {
@@ -132,18 +127,19 @@ const AdminProductFormPage: React.FC = () => {
         setImages(data.images);
         setOemCodesText(data.oemCodes.join("\n"));
 
-        // Rebuild compatibility rows — resolve brand for each generation's
-        // model by walking vehicle brands (best effort; user can re-pick).
-        const rows: CompatibilityRow[] = data.compatibility.map((entry) => ({
+        // Existing compatibility is shown as editable rows using the new model/year shape.
+        // The model and brand are resolved best-effort from the vehicle directory.
+        const loadedRows = data.compatibility.map((entry) => ({
           key: newRowKey(),
           vehicleBrandId: "",
           models: [],
-          vehicleModelId: "",
-          generations: [],
-          vehicleGenerationId: String(entry.vehicleGenerationId),
+          vehicleModelId: String(entry.vehicleModelId),
+          yearStart: String(entry.yearStart),
+          yearEnd: entry.yearEnd == null ? "" : String(entry.yearEnd),
+          untilNow: entry.yearEnd == null,
           installationPosition: entry.installationPosition,
         }));
-        setCompatRows(rows);
+        setCompatRows(loadedRows);
       } catch (err) {
         setError((err as Error).message);
       } finally {
@@ -152,14 +148,12 @@ const AdminProductFormPage: React.FC = () => {
     })();
   }, [id]);
 
-  // ── category checkbox toggle ─────────────────────────────────────────
   const toggleCategory = (catId: number) => {
     setCategoryIds((prev) =>
       prev.includes(catId) ? prev.filter((c) => c !== catId) : [...prev, catId],
     );
   };
 
-  // ── images ────────────────────────────────────────────────────────────
   const addImage = () => {
     setImages((prev) => [
       ...prev,
@@ -189,7 +183,6 @@ const AdminProductFormPage: React.FC = () => {
     }
   };
 
-  // ── compatibility rows ───────────────────────────────────────────────
   const addCompatRow = () => {
     setCompatRows((prev) => [
       ...prev,
@@ -198,8 +191,9 @@ const AdminProductFormPage: React.FC = () => {
         vehicleBrandId: "",
         models: [],
         vehicleModelId: "",
-        generations: [],
-        vehicleGenerationId: "",
+        yearStart: "",
+        yearEnd: "",
+        untilNow: false,
         installationPosition: "chung",
       },
     ]);
@@ -213,17 +207,24 @@ const AdminProductFormPage: React.FC = () => {
       setCompatRows((prev) =>
         prev.map((r) =>
           r.key === key
-            ? { ...r, vehicleBrandId: brandId, models: [], vehicleModelId: "", generations: [], vehicleGenerationId: "" }
+            ? {
+                ...r,
+                vehicleBrandId: brandId,
+                models: [],
+                vehicleModelId: "",
+                yearStart: "",
+                yearEnd: "",
+                untilNow: false,
+              }
             : r,
         ),
       );
+
       const brand = vehicleBrands.find((b) => String(b.id) === brandId);
       if (!brand) return;
       try {
         const { data } = await fetchVehicleBrandBySlug(brand.slug);
-        setCompatRows((prev) =>
-          prev.map((r) => (r.key === key ? { ...r, models: data.models } : r)),
-        );
+        setCompatRows((prev) => prev.map((r) => (r.key === key ? { ...r, models: data.models } : r)));
       } catch (err) {
         setError((err as Error).message);
       }
@@ -231,38 +232,20 @@ const AdminProductFormPage: React.FC = () => {
     [vehicleBrands],
   );
 
-  const onCompatModelChange = useCallback(async (key: string, modelId: string) => {
+  const onCompatModelChange = useCallback((key: string, modelId: string) => {
     setCompatRows((prev) =>
       prev.map((r) =>
         r.key === key
-          ? { ...r, vehicleModelId: modelId, generations: [], vehicleGenerationId: "" }
+          ? { ...r, vehicleModelId: modelId, yearStart: "", yearEnd: "", untilNow: false }
           : r,
       ),
     );
-    if (!modelId) return;
-    try {
-      const { data } = await fetchVehicleGenerationsByModelId(Number(modelId));
-      setCompatRows((prev) =>
-        prev.map((r) => (r.key === key ? { ...r, generations: data } : r)),
-      );
-    } catch (err) {
-      setError((err as Error).message);
-    }
   }, []);
 
-  const onCompatGenerationChange = (key: string, generationId: string) => {
-    setCompatRows((prev) =>
-      prev.map((r) => (r.key === key ? { ...r, vehicleGenerationId: generationId } : r)),
-    );
+  const updateCompatRow = (key: string, patch: Partial<CompatibilityRow>) => {
+    setCompatRows((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch } : r)));
   };
 
-  const onCompatPositionChange = (key: string, position: string) => {
-    setCompatRows((prev) =>
-      prev.map((r) => (r.key === key ? { ...r, installationPosition: position } : r)),
-    );
-  };
-
-  // ── submit ────────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -277,15 +260,24 @@ const AdminProductFormPage: React.FC = () => {
       .map((s) => s.trim())
       .filter(Boolean);
 
+    const invalidCompat = compatRows.find(
+      (r) => r.vehicleModelId && (!r.yearStart || Number.isNaN(Number(r.yearStart))),
+    );
+    if (invalidCompat) {
+      setError("Mỗi xe tương thích cần có Dòng xe và Từ năm hợp lệ.");
+      return;
+    }
+
     const compatibility: AdminProductCompatibilityPayload[] = compatRows
-      .filter((r) => r.vehicleGenerationId)
+      .filter((r) => r.vehicleModelId && r.yearStart)
       .map((r) => ({
-        vehicleGenerationId: Number(r.vehicleGenerationId),
+        vehicleModelId: Number(r.vehicleModelId),
+        yearStart: Number(r.yearStart),
+        yearEnd: r.untilNow ? null : r.yearEnd ? Number(r.yearEnd) : null,
         installationPosition: r.installationPosition,
       }));
 
     const validImages = images.filter((img) => img.imageUrl.trim());
-
     const payload = {
       productBrandId: Number(productBrandId),
       sku: sku.trim(),
@@ -301,11 +293,8 @@ const AdminProductFormPage: React.FC = () => {
 
     setSaving(true);
     try {
-      if (isEdit) {
-        await updateProduct(Number(id), payload);
-      } else {
-        await createProduct(payload);
-      }
+      if (isEdit) await updateProduct(Number(id), payload);
+      else await createProduct(payload);
       navigate("/admin/san-pham");
     } catch (err) {
       setError((err as Error).message);
@@ -318,41 +307,23 @@ const AdminProductFormPage: React.FC = () => {
     <div style={styles.page}>
       <header style={styles.header}>
         <span style={styles.logo}>Hachi Admin</span>
-        <Button variant="ghost" size="sm" onClick={logout}>
-          Đăng xuất
-        </Button>
+        <Button variant="ghost" size="sm" onClick={logout}>Đăng xuất</Button>
       </header>
 
       <main style={styles.main}>
-        <Link to="/admin/san-pham" style={styles.backLink}>
-          ← Quản lý Sản phẩm
-        </Link>
+        <Link to="/admin/san-pham" style={styles.backLink}>← Quản lý Sản phẩm</Link>
         <h2>{isEdit ? "Sửa sản phẩm" : "Thêm sản phẩm"}</h2>
-
         {error && <p style={styles.error}>{error}</p>}
 
         {loading ? (
           <p>Đang tải...</p>
         ) : (
           <form onSubmit={handleSubmit}>
-            {/* ── Thông tin cơ bản ─────────────────────────────────── */}
             <section style={styles.section}>
               <h3>Thông tin cơ bản</h3>
-              <Input
-                label="Tên sản phẩm *"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
+              <Input label="Tên sản phẩm *" value={name} onChange={(e) => setName(e.target.value)} required />
               <p style={styles.slugPreview}>Slug: /{slugPreview || "…"}</p>
-
-              <Input
-                label="SKU *"
-                value={sku}
-                onChange={(e) => setSku(e.target.value)}
-                required
-              />
-
+              <Input label="SKU *" value={sku} onChange={(e) => setSku(e.target.value)} required />
               <Select
                 label="Thương hiệu *"
                 value={productBrandId}
@@ -361,43 +332,20 @@ const AdminProductFormPage: React.FC = () => {
                 options={brands.map((b) => ({ value: String(b.id), label: b.name }))}
                 required
               />
-
-              <Select
-                label="Trạng thái"
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                options={STATUS_OPTIONS}
-              />
-
-              <Textarea
-                label="Mô tả"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-
-              <Textarea
-                label="Thông số kỹ thuật"
-                value={specification}
-                onChange={(e) => setSpecification(e.target.value)}
-              />
+              <Select label="Trạng thái" value={status} onChange={(e) => setStatus(e.target.value)} options={STATUS_OPTIONS} />
+              <Textarea label="Mô tả" value={description} onChange={(e) => setDescription(e.target.value)} />
+              <Textarea label="Thông số kỹ thuật" value={specification} onChange={(e) => setSpecification(e.target.value)} />
             </section>
 
-            {/* ── Danh mục ─────────────────────────────────────────── */}
             <section style={styles.section}>
               <h3>Danh mục</h3>
               <div style={styles.checkGrid}>
                 {categories.map((c) => (
-                  <Checkbox
-                    key={c.id}
-                    label={c.name}
-                    checked={categoryIds.includes(c.id)}
-                    onChange={() => toggleCategory(c.id)}
-                  />
+                  <Checkbox key={c.id} label={c.name} checked={categoryIds.includes(c.id)} onChange={() => toggleCategory(c.id)} />
                 ))}
               </div>
             </section>
 
-            {/* ── Ảnh sản phẩm ─────────────────────────────────────── */}
             <section style={styles.section}>
               <h3>Ảnh sản phẩm</h3>
               {images.map((img, idx) => (
@@ -410,9 +358,8 @@ const AdminProductFormPage: React.FC = () => {
                         onChange={(e) => updateImage(idx, { imageUrl: e.target.value })}
                         style={{ flex: 1 }}
                       />
-                      {/* Nút upload file ẩn input[type=file] */}
                       <label style={styles.uploadBtn} title="Chọn ảnh từ máy tính">
-                        {uploadingIdx === idx ? "⏳" : "📁"}
+                        {uploadingIdx === idx ? "Đang tải" : "Tải ảnh"}
                         <input
                           type="file"
                           accept="image/jpeg,image/png,image/webp,image/gif"
@@ -421,7 +368,7 @@ const AdminProductFormPage: React.FC = () => {
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) handleFileSelect(idx, file);
-                            e.target.value = ""; // reset để chọn lại cùng file
+                            e.target.value = "";
                           }}
                         />
                       </label>
@@ -436,22 +383,13 @@ const AdminProductFormPage: React.FC = () => {
                       />
                     )}
                   </div>
-                  <Checkbox
-                    label="Ảnh đại diện"
-                    checked={!!img.isThumbnail}
-                    onChange={() => setThumbnail(idx)}
-                  />
-                  <Button type="button" variant="danger" size="sm" onClick={() => removeImage(idx)}>
-                    Xóa
-                  </Button>
+                  <Checkbox label="Ảnh đại diện" checked={!!img.isThumbnail} onChange={() => setThumbnail(idx)} />
+                  <Button type="button" variant="danger" size="sm" onClick={() => removeImage(idx)}>Xóa</Button>
                 </div>
               ))}
-              <Button type="button" variant="secondary" size="sm" onClick={addImage}>
-                + Thêm ảnh
-              </Button>
+              <Button type="button" variant="secondary" size="sm" onClick={addImage}>+ Thêm ảnh</Button>
             </section>
 
-            {/* ── Mã OEM ───────────────────────────────────────────── */}
             <section style={styles.section}>
               <h3>Mã OEM</h3>
               <Textarea
@@ -461,65 +399,80 @@ const AdminProductFormPage: React.FC = () => {
               />
             </section>
 
-            {/* ── Xe tương thích ───────────────────────────────────── */}
             <section style={styles.section}>
-              <h3>Xe tương thích</h3>
+              <div style={styles.compatHeader}>
+                <div>
+                  <h3 style={{ marginBottom: 4 }}>Xe tương thích</h3>
+                  <p style={styles.compatHint}>Chọn Hãng → Dòng → khoảng năm áp dụng cho chính sản phẩm này.</p>
+                </div>
+              </div>
+
               {compatRows.map((row) => (
                 <div key={row.key} style={styles.compatRow}>
                   <Select
                     label="Hãng xe"
                     value={row.vehicleBrandId}
                     onChange={(e) => onCompatBrandChange(row.key, e.target.value)}
-                    placeholder="— Chọn hãng xe —"
+                    placeholder="— Chọn hãng —"
                     options={vehicleBrands.map((b) => ({ value: String(b.id), label: b.name }))}
                   />
                   <Select
                     label="Dòng xe"
                     value={row.vehicleModelId}
                     onChange={(e) => onCompatModelChange(row.key, e.target.value)}
-                    placeholder="— Chọn dòng xe —"
+                    placeholder="— Chọn dòng —"
                     options={row.models.map((m) => ({ value: String(m.id), label: m.name }))}
-                    disabled={row.models.length === 0}
+                    disabled={!row.vehicleBrandId || row.models.length === 0}
                   />
-                  <Select
-                    label="Đời xe"
-                    value={row.vehicleGenerationId}
-                    onChange={(e) => onCompatGenerationChange(row.key, e.target.value)}
-                    placeholder="— Chọn đời xe —"
-                    options={row.generations.map((g) => ({
-                      value: String(g.id),
-                      label: `${g.name} (${g.yearStart}–${g.yearEnd ?? "nay"})`,
-                    }))}
-                    disabled={row.generations.length === 0}
-                  />
+                  <div style={styles.yearField}>
+                    <label style={styles.yearLabel}>Từ năm *</label>
+                    <input
+                      type="number"
+                      min={1990}
+                      max={2030}
+                      value={row.yearStart}
+                      onChange={(e) => updateCompatRow(row.key, { yearStart: e.target.value })}
+                      placeholder="2019"
+                      style={styles.yearInput}
+                    />
+                  </div>
+                  <div style={styles.yearField}>
+                    <label style={styles.yearLabel}>Đến năm</label>
+                    <input
+                      type="number"
+                      min={1990}
+                      max={2035}
+                      value={row.untilNow ? "" : row.yearEnd}
+                      onChange={(e) => updateCompatRow(row.key, { yearEnd: e.target.value })}
+                      disabled={row.untilNow}
+                      placeholder="2023"
+                      style={{ ...styles.yearInput, opacity: row.untilNow ? 0.45 : 1 }}
+                    />
+                    <label style={styles.untilNowLabel}>
+                      <input
+                        type="checkbox"
+                        checked={row.untilNow}
+                        onChange={(e) => updateCompatRow(row.key, { untilNow: e.target.checked, yearEnd: "" })}
+                      />
+                      Đến nay
+                    </label>
+                  </div>
                   <Select
                     label="Vị trí lắp"
                     value={row.installationPosition}
-                    onChange={(e) => onCompatPositionChange(row.key, e.target.value)}
+                    onChange={(e) => updateCompatRow(row.key, { installationPosition: e.target.value })}
                     options={POSITION_OPTIONS}
                   />
-                  <Button
-                    type="button"
-                    variant="danger"
-                    size="sm"
-                    onClick={() => removeCompatRow(row.key)}
-                  >
-                    Xóa
-                  </Button>
+                  <Button type="button" variant="danger" size="sm" onClick={() => removeCompatRow(row.key)}>Xóa</Button>
                 </div>
               ))}
-              <Button type="button" variant="secondary" size="sm" onClick={addCompatRow}>
-                + Thêm xe tương thích
-              </Button>
+
+              <Button type="button" variant="secondary" size="sm" onClick={addCompatRow}>+ Thêm xe tương thích</Button>
             </section>
 
             <div style={styles.submitRow}>
-              <Button type="submit" variant="primary" loading={saving}>
-                {isEdit ? "Lưu thay đổi" : "Tạo sản phẩm"}
-              </Button>
-              <Button type="button" variant="ghost" onClick={() => navigate("/admin/san-pham")}>
-                Hủy
-              </Button>
+              <Button type="submit" variant="primary" loading={saving}>{isEdit ? "Lưu thay đổi" : "Tạo sản phẩm"}</Button>
+              <Button type="button" variant="ghost" onClick={() => navigate("/admin/san-pham")}>Hủy</Button>
             </div>
           </form>
         )}
@@ -531,47 +484,33 @@ const AdminProductFormPage: React.FC = () => {
 const styles: Record<string, React.CSSProperties> = {
   page: { minHeight: "100vh", display: "flex", flexDirection: "column" },
   header: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "0.75rem 1.5rem",
-    borderBottom: "1px solid #e5e7eb",
-    background: "#fff",
+    display: "flex", alignItems: "center", justifyContent: "space-between",
+    padding: "0.75rem 1.5rem", borderBottom: "1px solid #e5e7eb", background: "#fff",
   },
   logo: { fontWeight: 700, fontSize: "1rem", color: "#111" },
-  main: { padding: "2rem 1.5rem", flex: 1, maxWidth: 900 },
+  main: { padding: "2rem 1.5rem", flex: 1, maxWidth: 1100 },
   backLink: { color: "#666", fontSize: "0.875rem", textDecoration: "none" },
   error: { color: "#b91c1c", margin: "1rem 0" },
-  section: {
-    background: "#fff",
-    border: "1px solid #e5e7eb",
-    borderRadius: 8,
-    padding: "1.25rem",
-    marginBottom: "1.25rem",
-  },
+  section: { background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, padding: "1.25rem", marginBottom: "1.25rem" },
   slugPreview: { color: "#666", fontSize: "0.8rem", marginTop: "-0.5rem", marginBottom: "0.75rem" },
-  checkGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
-    gap: "0.5rem",
-  },
+  checkGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "0.5rem" },
   imageRow: { display: "flex", alignItems: "flex-start", gap: "0.75rem", marginBottom: "0.75rem" },
   uploadBtn: {
-    display: "inline-flex", alignItems: "center", justifyContent: "center",
-    width: 36, height: 36, borderRadius: 6, border: "1px solid #d1d5db",
-    background: "#f9fafb", cursor: "pointer", fontSize: "1rem", flexShrink: 0,
-    userSelect: "none" as const,
+    display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: 72, height: 36,
+    borderRadius: 6, border: "1px solid #d1d5db", background: "#f9fafb", cursor: "pointer",
+    fontSize: "0.8rem", flexShrink: 0, userSelect: "none" as const, padding: "0 10px",
   },
   imgPreview: { display: "none", marginTop: "0.5rem", maxHeight: 80, maxWidth: 120, borderRadius: 4, border: "1px solid #e5e7eb", objectFit: "cover" as const },
+  compatHeader: { marginBottom: "0.75rem" },
+  compatHint: { margin: 0, color: "#667085", fontSize: "0.875rem" },
   compatRow: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr 1fr 1fr auto",
-    gap: "0.75rem",
-    alignItems: "end",
-    marginBottom: "0.75rem",
-    paddingBottom: "0.75rem",
-    borderBottom: "1px dashed #e5e7eb",
+    display: "grid", gridTemplateColumns: "1.1fr 1.25fr 0.65fr 0.85fr 1fr auto", gap: "0.75rem",
+    alignItems: "start", marginBottom: "0.75rem", padding: "0.9rem 0", borderBottom: "1px dashed #e5e7eb",
   },
+  yearField: { display: "flex", flexDirection: "column", gap: 6 },
+  yearLabel: { fontSize: 13, fontWeight: 500, color: "#344054" },
+  yearInput: { width: "100%", minHeight: 40, boxSizing: "border-box", padding: "8px 10px", border: "1px solid #d0d5dd", borderRadius: 6, fontSize: 14 },
+  untilNowLabel: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#667085", cursor: "pointer" },
   submitRow: { display: "flex", gap: "0.75rem" },
 };
 
