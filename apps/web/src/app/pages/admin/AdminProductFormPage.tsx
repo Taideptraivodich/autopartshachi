@@ -15,7 +15,11 @@ import {
   fetchAllVehicleBrands,
   fetchVehicleBrandBySlug,
 } from "../../../features/product/api/product.api";
-import { uploadImage } from "../../../features/admin/api/admin-catalog.api";
+import {
+  createAdminBrand,
+  createAdminCategory,
+  uploadImage,
+} from "../../../features/admin/api/admin-catalog.api";
 import type {
   BrandListItem,
   CategoryListItem,
@@ -66,6 +70,8 @@ function newRowKey(): string {
   return `row-${rowKeySeq}`;
 }
 
+type QuickCreateKind = "brand" | "category" | null;
+
 const AdminProductFormPage: React.FC = () => {
   const { logout } = useAdminAuth();
   const navigate = useNavigate();
@@ -91,6 +97,9 @@ const AdminProductFormPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
+  const [quickCreateKind, setQuickCreateKind] = useState<QuickCreateKind>(null);
+  const [quickCreateName, setQuickCreateName] = useState("");
+  const [quickCreateSaving, setQuickCreateSaving] = useState(false);
 
   const slugPreview = useMemo(() => slugifyPreview(name), [name]);
 
@@ -127,8 +136,6 @@ const AdminProductFormPage: React.FC = () => {
         setImages(data.images);
         setOemCodesText(data.oemCodes.join("\n"));
 
-        // Existing compatibility is shown as editable rows using the new model/year shape.
-        // The model and brand are resolved best-effort from the vehicle directory.
         const loadedRows = data.compatibility.map((entry) => ({
           key: newRowKey(),
           vehicleBrandId: "",
@@ -152,6 +159,45 @@ const AdminProductFormPage: React.FC = () => {
     setCategoryIds((prev) =>
       prev.includes(catId) ? prev.filter((c) => c !== catId) : [...prev, catId],
     );
+  };
+
+  const openQuickCreate = (kind: Exclude<QuickCreateKind, null>) => {
+    setQuickCreateKind(kind);
+    setQuickCreateName("");
+  };
+
+  const closeQuickCreate = () => {
+    if (quickCreateSaving) return;
+    setQuickCreateKind(null);
+    setQuickCreateName("");
+  };
+
+  const handleQuickCreate = async () => {
+    const trimmed = quickCreateName.trim();
+    if (!trimmed || !quickCreateKind) return;
+
+    setQuickCreateSaving(true);
+    setError(null);
+    try {
+      if (quickCreateKind === "brand") {
+        const created = await createAdminBrand(trimmed, true, null);
+        setBrands((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
+        setProductBrandId(String(created.id));
+      } else {
+        const created = await createAdminCategory({
+          name: trimmed,
+          parentCategoryId: null,
+          isActive: true,
+        });
+        setCategories((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
+        setCategoryIds((prev) => (prev.includes(created.id) ? prev : [...prev, created.id]));
+      }
+      closeQuickCreate();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setQuickCreateSaving(false);
+    }
   };
 
   const addImage = () => {
@@ -321,24 +367,34 @@ const AdminProductFormPage: React.FC = () => {
           <form onSubmit={handleSubmit}>
             <section style={styles.section}>
               <h3>Thông tin cơ bản</h3>
+              <div style={styles.actionField}>
+                <Select
+                  label="Thương hiệu *"
+                  value={productBrandId}
+                  onChange={(e) => setProductBrandId(e.target.value)}
+                  placeholder="— Chọn thương hiệu —"
+                  options={brands.map((b) => ({ value: String(b.id), label: b.name }))}
+                  required
+                />
+                <Button type="button" variant="secondary" size="sm" onClick={() => openQuickCreate("brand")}>
+                  + Thương hiệu mới
+                </Button>
+              </div>
               <Input label="Tên sản phẩm *" value={name} onChange={(e) => setName(e.target.value)} required />
               <p style={styles.slugPreview}>Slug: /{slugPreview || "…"}</p>
               <Input label="SKU *" value={sku} onChange={(e) => setSku(e.target.value)} required />
-              <Select
-                label="Thương hiệu *"
-                value={productBrandId}
-                onChange={(e) => setProductBrandId(e.target.value)}
-                placeholder="— Chọn thương hiệu —"
-                options={brands.map((b) => ({ value: String(b.id), label: b.name }))}
-                required
-              />
               <Select label="Trạng thái" value={status} onChange={(e) => setStatus(e.target.value)} options={STATUS_OPTIONS} />
               <Textarea label="Mô tả" value={description} onChange={(e) => setDescription(e.target.value)} />
               <Textarea label="Thông số kỹ thuật" value={specification} onChange={(e) => setSpecification(e.target.value)} />
             </section>
 
             <section style={styles.section}>
-              <h3>Danh mục</h3>
+              <div style={styles.sectionTitleRow}>
+                <h3 style={{ margin: 0 }}>Danh mục</h3>
+                <Button type="button" variant="secondary" size="sm" onClick={() => openQuickCreate("category")}>
+                  + Danh mục mới
+                </Button>
+              </div>
               <div style={styles.checkGrid}>
                 {categories.map((c) => (
                   <Checkbox key={c.id} label={c.name} checked={categoryIds.includes(c.id)} onChange={() => toggleCategory(c.id)} />
@@ -477,6 +533,25 @@ const AdminProductFormPage: React.FC = () => {
           </form>
         )}
       </main>
+
+      {quickCreateKind && (
+        <div style={styles.modalBackdrop} role="presentation" onMouseDown={closeQuickCreate}>
+          <div style={styles.modal} onMouseDown={(e) => e.stopPropagation()}>
+            <h3 style={{ marginTop: 0 }}>{quickCreateKind === "brand" ? "Tạo thương hiệu mới" : "Tạo danh mục mới"}</h3>
+            <Input
+              label={quickCreateKind === "brand" ? "Tên thương hiệu *" : "Tên danh mục *"}
+              value={quickCreateName}
+              onChange={(e) => setQuickCreateName(e.target.value)}
+              autoFocus
+              placeholder={quickCreateKind === "brand" ? "Ví dụ: Bosch, Denso..." : "Ví dụ: Hệ thống lọc"}
+            />
+            <div style={styles.modalActions}>
+              <Button type="button" variant="ghost" onClick={closeQuickCreate} disabled={quickCreateSaving}>Hủy</Button>
+              <Button type="button" variant="primary" loading={quickCreateSaving} disabled={!quickCreateName.trim()} onClick={handleQuickCreate}>Tạo</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -492,6 +567,8 @@ const styles: Record<string, React.CSSProperties> = {
   backLink: { color: "#666", fontSize: "0.875rem", textDecoration: "none" },
   error: { color: "#b91c1c", margin: "1rem 0" },
   section: { background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, padding: "1.25rem", marginBottom: "1.25rem" },
+  sectionTitleRow: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", marginBottom: "1rem" },
+  actionField: { display: "grid", gridTemplateColumns: "1fr auto", gap: "0.75rem", alignItems: "end", marginBottom: "1rem" },
   slugPreview: { color: "#666", fontSize: "0.8rem", marginTop: "-0.5rem", marginBottom: "0.75rem" },
   checkGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "0.5rem" },
   imageRow: { display: "flex", alignItems: "flex-start", gap: "0.75rem", marginBottom: "0.75rem" },
@@ -512,6 +589,9 @@ const styles: Record<string, React.CSSProperties> = {
   yearInput: { width: "100%", minHeight: 40, boxSizing: "border-box", padding: "8px 10px", border: "1px solid #d0d5dd", borderRadius: 6, fontSize: 14 },
   untilNowLabel: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#667085", cursor: "pointer" },
   submitRow: { display: "flex", gap: "0.75rem" },
+  modalBackdrop: { position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.28)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 20 },
+  modal: { background: "#fff", borderRadius: 12, padding: "1.5rem", width: "min(420px, 100%)", boxShadow: "0 24px 64px rgba(15, 23, 42, 0.18)" },
+  modalActions: { display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "1rem" },
 };
 
 export default AdminProductFormPage;
