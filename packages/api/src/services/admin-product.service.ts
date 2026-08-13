@@ -10,12 +10,7 @@ import {
   ProductRepository,
   type NewProductInput,
 } from "autoparts-db/repositories";
-import { OemRepository } from "autoparts-db/repositories";
-import { VehicleRepository } from "autoparts-db/repositories";
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+import { OemRepository, VehicleRepository } from "autoparts-db/repositories";
 
 export interface CreateProductPayload {
   productBrandId: number;
@@ -33,17 +28,18 @@ export interface CreateProductPayload {
     isThumbnail?: boolean;
     displayOrder?: number;
   }[];
-  /** Raw string codes, ví dụ ["04465-BZ160", "04466-BZ160"] */
   oemCodes?: string[];
   compatibility?: {
-    vehicleGenerationId: number;
+    vehicleModelId: number;
+    yearStart: number;
+    yearEnd?: number | null;
     installationPosition: string;
+    notes?: string | null;
   }[];
 }
 
 export type UpdateProductPayload = Partial<CreateProductPayload>;
 
-/** Full product data for the admin edit form (includes categoryIds, oemCodes, compatibility). */
 export interface AdminProductDetail {
   id: number;
   productBrandId: number;
@@ -63,14 +59,15 @@ export interface AdminProductDetail {
   }[];
   categoryIds: number[];
   oemCodes: string[];
-  compatibility: { vehicleGenerationId: number; installationPosition: string }[];
+  compatibility: {
+    vehicleModelId: number;
+    yearStart: number;
+    yearEnd: number | null;
+    installationPosition: string;
+    notes: string | null;
+  }[];
 }
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/** Bỏ dấu tiếng Việt, lowercase, thay ký tự không hợp lệ bằng "-". */
 function slugify(name: string): string {
   return name
     .normalize("NFD")
@@ -81,10 +78,6 @@ function slugify(name: string): string {
     .replace(/^-|-$/g, "");
 }
 
-// ---------------------------------------------------------------------------
-// AdminProductService
-// ---------------------------------------------------------------------------
-
 export class AdminProductService {
   constructor(
     private readonly productRepo: ProductRepository,
@@ -92,26 +85,17 @@ export class AdminProductService {
     private readonly vehicleRepo: VehicleRepository,
   ) {}
 
-  // ── slug generation ───────────────────────────────────────────────────
-
   private async generateUniqueSlug(name: string): Promise<string> {
     const slugBase = slugify(name);
     const existing = await this.productRepo.findBySlugLike(slugBase);
-
     if (!existing.includes(slugBase)) return slugBase;
-
     let n = 2;
-    while (existing.includes(`${slugBase}-${n}`)) {
-      n += 1;
-    }
+    while (existing.includes(`${slugBase}-${n}`)) n += 1;
     return `${slugBase}-${n}`;
   }
 
-  // ── create ────────────────────────────────────────────────────────────
-
   async create(payload: CreateProductPayload): Promise<{ id: number }> {
     const slug = await this.generateUniqueSlug(payload.name);
-
     const newProduct: NewProductInput = {
       productBrandId: payload.productBrandId,
       sku: payload.sku,
@@ -125,34 +109,21 @@ export class AdminProductService {
     };
 
     const id = await this.productRepo.create(newProduct);
-
-    if (payload.categoryIds !== undefined) {
-      await this.productRepo.setCategories(id, payload.categoryIds);
-    }
-
-    if (payload.images !== undefined) {
-      await this.productRepo.setImages(id, payload.images);
-    }
-
+    if (payload.categoryIds !== undefined) await this.productRepo.setCategories(id, payload.categoryIds);
+    if (payload.images !== undefined) await this.productRepo.setImages(id, payload.images);
     if (payload.oemCodes !== undefined) {
       const oemNumberIds = await Promise.all(
         payload.oemCodes.map((code) => this.oemRepo.findOrCreateByCode(code)),
       );
       await this.oemRepo.setOemMappings(id, oemNumberIds);
     }
-
-    if (payload.compatibility !== undefined) {
-      await this.vehicleRepo.setCompatibility(id, payload.compatibility);
-    }
+    if (payload.compatibility !== undefined) await this.vehicleRepo.setCompatibility(id, payload.compatibility);
 
     return { id };
   }
 
-  // ── update ────────────────────────────────────────────────────────────
-
   async update(id: number, payload: UpdateProductPayload): Promise<{ id: number }> {
     const fields: Partial<NewProductInput> = {};
-
     if (payload.productBrandId !== undefined) fields.productBrandId = payload.productBrandId;
     if (payload.sku !== undefined) fields.sku = payload.sku;
     if (payload.name !== undefined) fields.name = payload.name;
@@ -162,41 +133,23 @@ export class AdminProductService {
     if (payload.metaTitle !== undefined) fields.metaTitle = payload.metaTitle;
     if (payload.metaDescription !== undefined) fields.metaDescription = payload.metaDescription;
 
-    if (Object.keys(fields).length > 0) {
-      await this.productRepo.update(id, fields);
-    }
-
-    // Mỗi sub-list chỉ set nếu field CÓ MẶT trong payload (không phải undefined)
-    // — cho phép partial update không đụng OEM/xe/ảnh/danh mục.
-    if (payload.categoryIds !== undefined) {
-      await this.productRepo.setCategories(id, payload.categoryIds);
-    }
-
-    if (payload.images !== undefined) {
-      await this.productRepo.setImages(id, payload.images);
-    }
-
+    if (Object.keys(fields).length > 0) await this.productRepo.update(id, fields);
+    if (payload.categoryIds !== undefined) await this.productRepo.setCategories(id, payload.categoryIds);
+    if (payload.images !== undefined) await this.productRepo.setImages(id, payload.images);
     if (payload.oemCodes !== undefined) {
       const oemNumberIds = await Promise.all(
         payload.oemCodes.map((code) => this.oemRepo.findOrCreateByCode(code)),
       );
       await this.oemRepo.setOemMappings(id, oemNumberIds);
     }
-
-    if (payload.compatibility !== undefined) {
-      await this.vehicleRepo.setCompatibility(id, payload.compatibility);
-    }
+    if (payload.compatibility !== undefined) await this.vehicleRepo.setCompatibility(id, payload.compatibility);
 
     return { id };
   }
 
-  // ── remove ────────────────────────────────────────────────────────────
-
   async remove(id: number): Promise<void> {
     await this.productRepo.delete(id);
   }
-
-  // ── admin detail (full data for edit form) ──────────────────────────────
 
   async findAdminDetail(id: number): Promise<AdminProductDetail | null> {
     const detail = await this.productRepo.findById(id);
@@ -231,10 +184,7 @@ export class AdminProductService {
     };
   }
 
-  async setVisibility(
-    id: number,
-    isVisible: boolean,
-  ): Promise<{ id: number; isVisible: boolean } | undefined> {
+  async setVisibility(id: number, isVisible: boolean): Promise<{ id: number; isVisible: boolean } | undefined> {
     return this.productRepo.setVisibility(id, isVisible);
   }
 }
