@@ -53,6 +53,12 @@ function slugifyPreview(name: string): string {
     .replace(/^-|-$/g, "");
 }
 
+function resolveImageUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (url.startsWith("/uploads/")) return `http://localhost:3001${url}`;
+  return url;
+}
+
 interface CompatibilityRow {
   key: string;
   vehicleBrandId: string;
@@ -99,6 +105,8 @@ const AdminProductFormPage: React.FC = () => {
   const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
   const [quickCreateKind, setQuickCreateKind] = useState<QuickCreateKind>(null);
   const [quickCreateName, setQuickCreateName] = useState("");
+  const [quickCreateLogoUrl, setQuickCreateLogoUrl] = useState<string | null>(null);
+  const [quickCreateUploading, setQuickCreateUploading] = useState(false);
   const [quickCreateSaving, setQuickCreateSaving] = useState(false);
 
   const slugPreview = useMemo(() => slugifyPreview(name), [name]);
@@ -164,23 +172,39 @@ const AdminProductFormPage: React.FC = () => {
   const openQuickCreate = (kind: Exclude<QuickCreateKind, null>) => {
     setQuickCreateKind(kind);
     setQuickCreateName("");
+    setQuickCreateLogoUrl(null);
+    setQuickCreateUploading(false);
   };
 
   const closeQuickCreate = () => {
-    if (quickCreateSaving) return;
+    if (quickCreateSaving || quickCreateUploading) return;
     setQuickCreateKind(null);
     setQuickCreateName("");
+    setQuickCreateLogoUrl(null);
+  };
+
+  const handleQuickCreateLogoSelect = async (file: File) => {
+    setQuickCreateUploading(true);
+    setError(null);
+    try {
+      const url = await uploadImage(file);
+      setQuickCreateLogoUrl(url);
+    } catch (err) {
+      setError(`Upload logo thất bại: ${(err as Error).message}`);
+    } finally {
+      setQuickCreateUploading(false);
+    }
   };
 
   const handleQuickCreate = async () => {
     const trimmed = quickCreateName.trim();
-    if (!trimmed || !quickCreateKind) return;
+    if (!trimmed || !quickCreateKind || quickCreateUploading) return;
 
     setQuickCreateSaving(true);
     setError(null);
     try {
       if (quickCreateKind === "brand") {
-        const created = await createAdminBrand(trimmed, true, null);
+        const created = await createAdminBrand(trimmed, true, quickCreateLogoUrl);
         setBrands((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
         setProductBrandId(String(created.id));
       } else {
@@ -552,9 +576,48 @@ const AdminProductFormPage: React.FC = () => {
               autoFocus
               placeholder={quickCreateKind === "brand" ? "Ví dụ: Bosch, Denso..." : "Ví dụ: Hệ thống lọc"}
             />
+
+            {quickCreateKind === "brand" && (
+              <div style={styles.quickLogoBlock}>
+                <div style={styles.quickLogoLabel}>Logo thương hiệu</div>
+                {quickCreateLogoUrl && (
+                  <div style={styles.quickLogoPreviewRow}>
+                    <img
+                      src={resolveImageUrl(quickCreateLogoUrl) ?? quickCreateLogoUrl}
+                      alt="Logo xem trước"
+                      style={styles.quickLogoPreview}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setQuickCreateLogoUrl(null)}
+                      disabled={quickCreateUploading || quickCreateSaving}
+                      style={styles.quickLogoRemove}
+                    >
+                      Xóa ảnh
+                    </button>
+                  </div>
+                )}
+                <label style={styles.quickLogoUploadBtn}>
+                  <span>{quickCreateUploading ? "Đang tải lên…" : quickCreateLogoUrl ? "Đổi ảnh" : "Chọn ảnh từ máy"}</span>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    style={{ display: "none" }}
+                    disabled={quickCreateUploading || quickCreateSaving}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleQuickCreateLogoSelect(file);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+                <span style={styles.quickLogoHint}>JPEG, PNG, WebP — tối đa 5MB</span>
+              </div>
+            )}
+
             <div style={styles.modalActions}>
-              <Button type="button" variant="ghost" onClick={closeQuickCreate} disabled={quickCreateSaving}>Hủy</Button>
-              <Button type="button" variant="primary" loading={quickCreateSaving} disabled={!quickCreateName.trim()} onClick={handleQuickCreate}>Tạo</Button>
+              <Button type="button" variant="ghost" onClick={closeQuickCreate} disabled={quickCreateSaving || quickCreateUploading}>Hủy</Button>
+              <Button type="button" variant="primary" loading={quickCreateSaving} disabled={!quickCreateName.trim() || quickCreateUploading} onClick={handleQuickCreate}>Tạo</Button>
             </div>
           </div>
         </div>
@@ -596,6 +659,17 @@ const styles: Record<string, React.CSSProperties> = {
   yearInput: { width: "100%", minHeight: 40, boxSizing: "border-box", padding: "8px 10px", border: "1px solid #d0d5dd", borderRadius: 6, fontSize: 14 },
   untilNowLabel: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#667085", cursor: "pointer" },
   submitRow: { display: "flex", gap: "0.75rem" },
+  quickLogoBlock: { marginTop: "0.25rem" },
+  quickLogoLabel: { fontSize: "0.85rem", color: "#374151", marginBottom: 6 },
+  quickLogoPreviewRow: { display: "flex", alignItems: "center", gap: 10, marginBottom: 8 },
+  quickLogoPreview: { width: 56, height: 56, objectFit: "contain" as const, border: "1px solid #e5e7eb", borderRadius: 6, background: "#f9fafb" },
+  quickLogoRemove: { fontSize: "0.78rem", color: "#b91c1c", background: "none", border: "none", cursor: "pointer", padding: 0 },
+  quickLogoUploadBtn: {
+    display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: 130, height: 36,
+    borderRadius: 6, border: "1px solid #d1d5db", background: "#fff", cursor: "pointer",
+    fontSize: "0.82rem", color: "#374151", padding: "0 12px", userSelect: "none" as const,
+  },
+  quickLogoHint: { marginLeft: 8, fontSize: "0.75rem", color: "#9ca3af" },
   modalBackdrop: { position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.28)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 20 },
   modal: { background: "#fff", borderRadius: 12, padding: "1.5rem", width: "min(420px, 100%)", boxShadow: "0 24px 64px rgba(15, 23, 42, 0.18)" },
   modalActions: { display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "1rem" },
