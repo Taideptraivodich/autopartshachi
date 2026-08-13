@@ -15,12 +15,12 @@ export const vehicleModelRelations = relations(vehicleModel, ({ one, many }) => 
     references: [vehicleBrand.id],
   }),
   generations: many(vehicleGeneration),
+  compatibilities: many(compatibility),
 }));
 
-export const vehicleGenerationRelations = relations(vehicleGeneration, ({ one, many }) => ({
+export const vehicleGenerationRelations = relations(vehicleGeneration, ({ one }) => ({
   model: one(vehicleModel, {
     fields: [vehicleGeneration.vehicleModelId],
     references: [vehicleModel.id],
   }),
-  compatibilities: many(compatibility),
 }));
