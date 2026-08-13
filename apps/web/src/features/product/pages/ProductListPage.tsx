@@ -23,32 +23,37 @@ const ProductListPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const vehicleGenIdFromUrl = searchParams.get('vehicleGenerationId')
-    ? Number(searchParams.get('vehicleGenerationId'))
+  const vehicleModelIdFromUrl = searchParams.get('vehicleModelId')
+    ? Number(searchParams.get('vehicleModelId'))
+    : undefined;
+  const vehicleYearFromUrl = searchParams.get('vehicleYear')
+    ? Number(searchParams.get('vehicleYear'))
     : undefined;
 
   const [filters, setFilters] = useState<ProductFilterParams>(() => ({
     sortBy: 'createdAt',
     sortDir: 'desc',
-    vehicleGenerationId: vehicleGenIdFromUrl,
+    vehicleModelId: vehicleModelIdFromUrl,
+    vehicleYear: vehicleYearFromUrl,
   }));
   const [brands, setBrands] = useState<BrandListItem[]>([]);
   const [categories, setCategories] = useState<CategoryListItem[]>([]);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
-  // Sync vehicleGenerationId từ URL vào filters
   useEffect(() => {
-    setFilters((f) => ({ ...f, vehicleGenerationId: vehicleGenIdFromUrl }));
+    setFilters((f) => ({
+      ...f,
+      vehicleModelId: vehicleModelIdFromUrl,
+      vehicleYear: vehicleYearFromUrl,
+    }));
     setPage(1);
-  }, [vehicleGenIdFromUrl]);
+  }, [vehicleModelIdFromUrl, vehicleYearFromUrl]);
 
-  // Load brands + categories một lần
   useEffect(() => {
     fetchAllBrands().then((res) => setBrands(res.data)).catch(() => {});
     fetchAllCategories().then((res) => setCategories(res.data)).catch(() => {});
   }, []);
 
-  // Fetch sản phẩm khi filter hoặc page thay đổi
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -85,15 +90,18 @@ const ProductListPage: React.FC = () => {
   const handleClearVehicle = () => {
     clearSelected();
     const next = new URLSearchParams(searchParams);
-    next.delete('vehicleGenerationId');
+    next.delete('vehicleModelId');
+    next.delete('vehicleYear');
     setSearchParams(next);
   };
 
   const selectedVehicle = getSelected();
-  const vehicleBannerLabel = vehicleGenIdFromUrl && selectedVehicle?.generationId === vehicleGenIdFromUrl
-    ? selectedVehicle.generationLabel
-    : vehicleGenIdFromUrl
-      ? `Đời xe #${vehicleGenIdFromUrl}`
+  const vehicleBannerLabel = vehicleModelIdFromUrl && vehicleYearFromUrl
+    && selectedVehicle?.modelId === vehicleModelIdFromUrl
+    && selectedVehicle?.year === vehicleYearFromUrl
+    ? selectedVehicle.vehicleLabel
+    : vehicleModelIdFromUrl && vehicleYearFromUrl
+      ? `Dòng xe #${vehicleModelIdFromUrl} — ${vehicleYearFromUrl}`
       : null;
 
   const handlePageChange = (newPage: number) => {
@@ -131,7 +139,6 @@ const ProductListPage: React.FC = () => {
           )}
 
           <div className={styles.layout}>
-            {/* Sidebar */}
             <aside
               className={`${styles.sidebarWrap} ${mobileFilterOpen ? styles.mobileOpen : ''}`}
             >
@@ -145,7 +152,6 @@ const ProductListPage: React.FC = () => {
               />
             </aside>
 
-            {/* Main content */}
             <div className={styles.mainContent}>
               <SortBar
                 total={total}
