@@ -17,10 +17,13 @@ function slugify(name: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+function isUniqueViolation(err: unknown): boolean {
+  return typeof err === "object" && err !== null && "code" in err && (err as { code?: unknown }).code === "23505";
+}
+
 export function createAdminCategoryRouter(categoryService: CategoryService): Router {
   const r = Router();
 
-  // GET /api/admin/danh-muc  — flat list (dùng cho admin UI)
   r.get("/", async (_req: Request, res: Response) => {
     try {
       const data = await categoryService.getCategories();
@@ -31,7 +34,6 @@ export function createAdminCategoryRouter(categoryService: CategoryService): Rou
     }
   });
 
-  // POST /api/admin/danh-muc
   r.post("/", async (req: Request, res: Response) => {
     try {
       const { name, parentCategoryId, displayOrder, isActive } = req.body as {
@@ -41,12 +43,18 @@ export function createAdminCategoryRouter(categoryService: CategoryService): Rou
         isActive?: boolean;
       };
       if (!name?.trim()) {
-        res.status(400).json({ error: "name is required" });
+        res.status(400).json({ error: "Tên danh mục là bắt buộc" });
         return;
       }
-      const slug = slugify(name.trim());
+      const trimmedName = name.trim();
+      const slug = slugify(trimmedName);
+      const existing = (await categoryService.getCategories()).find((category) => category.slug === slug);
+      if (existing) {
+        res.status(409).json({ error: `Danh mục "${existing.name}" đã tồn tại.` });
+        return;
+      }
       const cat = await categoryService.adminCreate({
-        name: name.trim(),
+        name: trimmedName,
         slug,
         parentCategoryId: parentCategoryId ?? null,
         displayOrder: displayOrder ?? 0,
@@ -55,11 +63,14 @@ export function createAdminCategoryRouter(categoryService: CategoryService): Rou
       res.status(201).json({ data: cat });
     } catch (err) {
       logger.error("adminCreateCategory error", err);
+      if (isUniqueViolation(err)) {
+        res.status(409).json({ error: "Danh mục này đã tồn tại." });
+        return;
+      }
       res.status(500).json({ error: "Internal server error" });
     }
   });
 
-  // PUT /api/admin/danh-muc/:id
   r.put("/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(String(req.params.id), 10);
@@ -80,11 +91,14 @@ export function createAdminCategoryRouter(categoryService: CategoryService): Rou
       res.json({ data: cat });
     } catch (err) {
       logger.error("adminUpdateCategory error", err);
+      if (isUniqueViolation(err)) {
+        res.status(409).json({ error: "Tên danh mục hoặc slug đã tồn tại." });
+        return;
+      }
       res.status(500).json({ error: "Internal server error" });
     }
   });
 
-  // DELETE /api/admin/danh-muc/:id
   r.delete("/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(String(req.params.id), 10);
