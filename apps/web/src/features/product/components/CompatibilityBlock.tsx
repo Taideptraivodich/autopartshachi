@@ -16,8 +16,7 @@ const POSITION_LABEL: Record<string, string> = {
   sau_phai: 'Sau phải',
 };
 
-interface GenerationGroup {
-  genName: string;
+interface YearRangeEntry {
   yearStart: number;
   yearEnd: number | null;
   installationPosition: string;
@@ -27,13 +26,17 @@ interface GenerationGroup {
 interface ModelGroup {
   modelName: string;
   modelSlug: string;
-  generations: GenerationGroup[];
+  entries: YearRangeEntry[];
 }
 
 interface BrandGroup {
   brandName: string;
   brandSlug: string;
   models: ModelGroup[];
+}
+
+function formatYearRange(yearStart: number, yearEnd: number | null): string {
+  return yearEnd ? `${yearStart} – ${yearEnd}` : `${yearStart} – nay`;
 }
 
 function groupEntries(entries: CompatibilityEntry[]): BrandGroup[] {
@@ -47,12 +50,11 @@ function groupEntries(entries: CompatibilityEntry[]): BrandGroup[] {
 
     let model = brand.models.find((m) => m.modelSlug === e.modelSlug);
     if (!model) {
-      model = { modelName: e.modelName, modelSlug: e.modelSlug, generations: [] };
+      model = { modelName: e.modelName, modelSlug: e.modelSlug, entries: [] };
       brand.models.push(model);
     }
 
-    model.generations.push({
-      genName: e.generationName,
+    model.entries.push({
       yearStart: e.yearStart,
       yearEnd: e.yearEnd,
       installationPosition: e.installationPosition,
@@ -69,7 +71,7 @@ const CompatibilityBlock: React.FC<CompatibilityBlockProps> = ({ entries }) => {
   return (
     <div className={styles.block}>
       <div className={styles.header}>
-        <span className={styles.headerIcon}>🚗</span>
+        <span className={styles.headerIcon} aria-hidden="true" />
         <h3 className={styles.headerTitle}>Xe tương thích</h3>
       </div>
 
@@ -85,18 +87,12 @@ const CompatibilityBlock: React.FC<CompatibilityBlockProps> = ({ entries }) => {
                   <div key={model.modelSlug} className={styles.modelRow}>
                     <span className={styles.modelName}>{model.modelName}</span>
                     <div className={styles.generations}>
-                      {model.generations.map((gen, idx) => {
-                        const yearRange = gen.yearEnd
-                          ? `${gen.yearStart}–${gen.yearEnd}`
-                          : `${gen.yearStart}+`;
-                        const posLabel = POSITION_LABEL[gen.installationPosition] ?? '';
+                      {model.entries.map((entry, idx) => {
+                        const posLabel = POSITION_LABEL[entry.installationPosition] ?? '';
                         return (
-                          <span key={idx} className={styles.genTag}>
-                            <span className={styles.genYear}>{yearRange}</span>
-                            <span className={styles.genName}>{gen.genName}</span>
-                            {posLabel && (
-                              <span className={styles.genPosition}>{posLabel}</span>
-                            )}
+                          <span key={`${entry.yearStart}-${entry.yearEnd ?? 'now'}-${idx}`} className={styles.genTag}>
+                            <span className={styles.genYear}>{formatYearRange(entry.yearStart, entry.yearEnd)}</span>
+                            {posLabel && <span className={styles.genPosition}>{posLabel}</span>}
                           </span>
                         );
                       })}
