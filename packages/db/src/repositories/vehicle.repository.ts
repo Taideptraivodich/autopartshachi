@@ -2,6 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { type Database } from "../db/index.js";
 import { vehicleBrand, vehicleGeneration, vehicleModel } from "../db/schema/vehicle.js";
 import { compatibility } from "../db/schema/compatibility.js";
+import { product } from "../db/schema/product.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -33,6 +34,11 @@ export interface VehicleGenerationInput {
   yearStart: number;
   yearEnd?: number | null;
   isActive?: boolean;
+}
+
+export interface VehicleCompatibilityYearRange {
+  yearStart: number;
+  yearEnd: number | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -100,6 +106,23 @@ export class VehicleRepository {
       .where(eq(vehicleGeneration.id, id))
       .limit(1);
     return rows[0];
+  }
+
+  async findCompatibilityYearRangesByModelId(modelId: number): Promise<VehicleCompatibilityYearRange[]> {
+    return this.db
+      .selectDistinct({
+        yearStart: compatibility.yearStart,
+        yearEnd: compatibility.yearEnd,
+      })
+      .from(compatibility)
+      .innerJoin(product, eq(compatibility.productId, product.id))
+      .where(
+        and(
+          eq(compatibility.vehicleModelId, modelId),
+          eq(product.isVisible, true),
+        ),
+      )
+      .orderBy(compatibility.yearStart, compatibility.yearEnd);
   }
 
   async findAllBrandsAdmin(): Promise<VehicleBrand[]> {
