@@ -1,20 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import Select from "../../../components/ui/Select";
-import {
-  fetchAllVehicleBrands,
-  fetchModelsByBrandId,
-  fetchVehicleGenerationsByModelId,
-} from "../../product/api/product.api";
-import {
-  useVehicleSelector,
-  type SelectedVehicle,
-} from "../hooks/useVehicleSelector";
-import type {
-  VehicleBrandListItem,
-  VehicleModelItem,
-  VehicleGenerationItem,
-} from "../../product/api/types";
+import { fetchAllVehicleBrands, fetchModelsByBrandId } from "../../product/api/product.api";
+import { useVehicleSelector, type SelectedVehicle } from "../hooks/useVehicleSelector";
+import type { VehicleBrandListItem, VehicleModelItem } from "../../product/api/types";
 import styles from "./VehicleSelectorWidget.module.css";
 
 interface VehicleSelectorWidgetProps {
@@ -22,140 +11,99 @@ interface VehicleSelectorWidgetProps {
   onVehicleSelect?: (vehicle: SelectedVehicle | null) => void;
 }
 
-const VehicleSelectorWidget: React.FC<VehicleSelectorWidgetProps> = ({
-  mode,
-  onVehicleSelect,
-}) => {
+const CURRENT_YEAR = new Date().getFullYear();
+
+const VehicleSelectorWidget: React.FC<VehicleSelectorWidgetProps> = ({ mode, onVehicleSelect }) => {
   const { getSelected, setSelected, clearSelected } = useVehicleSelector();
 
   const [brands, setBrands] = useState<VehicleBrandListItem[]>([]);
   const [models, setModels] = useState<VehicleModelItem[]>([]);
-  const [generations, setGenerations] = useState<VehicleGenerationItem[]>([]);
-
   const [selectedBrandId, setSelectedBrandId] = useState<number | "">("");
   const [selectedModelId, setSelectedModelId] = useState<number | "">("");
-  const [selectedGenId, setSelectedGenId] = useState<number | "">("");
+  const [selectedYear, setSelectedYear] = useState<string>("");
   const [currentVehicle, setCurrentVehicle] = useState<SelectedVehicle | null>(null);
   const [loadingModels, setLoadingModels] = useState(false);
-  const [loadingGens, setLoadingGens] = useState(false);
 
   useEffect(() => {
-    fetchAllVehicleBrands()
-      .then((res) => setBrands(res.data))
-      .catch(console.error);
-
+    fetchAllVehicleBrands().then((res) => setBrands(res.data)).catch(() => setBrands([]));
     const saved = getSelected();
     if (!saved) return;
 
     setCurrentVehicle(saved);
     setSelectedBrandId(saved.brandId);
     setSelectedModelId(saved.modelId);
-    setSelectedGenId(saved.generationId);
+    setSelectedYear(String(saved.year));
 
     setLoadingModels(true);
     fetchModelsByBrandId(saved.brandId)
-      .then((res) => {
-        setModels(res.data);
-        return fetchVehicleGenerationsByModelId(saved.modelId);
-      })
-      .then((res) => setGenerations(res.data))
-      .catch(console.error)
-      .finally(() => {
-        setLoadingModels(false);
-        setLoadingGens(false);
-      });
+      .then((res) => setModels(res.data))
+      .catch(() => setModels([]))
+      .finally(() => setLoadingModels(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleBrandChange = useCallback(
-    async (brandIdStr: string) => {
-      const brandId = brandIdStr === "" ? "" : Number(brandIdStr);
-      setSelectedBrandId(brandId);
-      setSelectedModelId("");
-      setSelectedGenId("");
+  const handleBrandChange = useCallback(async (brandIdStr: string) => {
+    const brandId = brandIdStr === "" ? "" : Number(brandIdStr);
+    setSelectedBrandId(brandId);
+    setSelectedModelId("");
+    setSelectedYear("");
+    setModels([]);
+    setCurrentVehicle(null);
+    clearSelected();
+    onVehicleSelect?.(null);
+
+    if (brandId === "") return;
+    setLoadingModels(true);
+    try {
+      const res = await fetchModelsByBrandId(brandId);
+      setModels(res.data);
+    } catch {
       setModels([]);
-      setGenerations([]);
-      setCurrentVehicle(null);
+    } finally {
+      setLoadingModels(false);
+    }
+  }, [clearSelected, onVehicleSelect]);
 
-      if (brandId === "") return;
+  const handleModelChange = useCallback((modelIdStr: string) => {
+    const modelId = modelIdStr === "" ? "" : Number(modelIdStr);
+    setSelectedModelId(modelId);
+    setSelectedYear("");
+    setCurrentVehicle(null);
+    clearSelected();
+    onVehicleSelect?.(null);
+  }, [clearSelected, onVehicleSelect]);
 
-      setLoadingModels(true);
-      try {
-        const res = await fetchModelsByBrandId(brandId as number);
-        setModels(res.data);
-      } catch {
-        // ignore
-      } finally {
-        setLoadingModels(false);
-      }
-    },
-    [],
-  );
+  const handleYearChange = useCallback((yearStr: string) => {
+    setSelectedYear(yearStr);
+    if (!yearStr || selectedBrandId === "" || selectedModelId === "") return;
 
-  const handleModelChange = useCallback(
-    async (modelIdStr: string) => {
-      const modelId = modelIdStr === "" ? "" : Number(modelIdStr);
-      setSelectedModelId(modelId);
-      setSelectedGenId("");
-      setGenerations([]);
-      setCurrentVehicle(null);
+    const brand = brands.find((b) => b.id === selectedBrandId);
+    const model = models.find((m) => m.id === selectedModelId);
+    const year = Number(yearStr);
+    if (!brand || !model || !Number.isInteger(year) || year < 1990 || year > CURRENT_YEAR + 2) return;
 
-      if (modelId === "") return;
+    const vehicle: SelectedVehicle = {
+      brandId: brand.id,
+      brandName: brand.name,
+      brandSlug: brand.slug,
+      modelId: model.id,
+      modelName: model.name,
+      year,
+      vehicleLabel: `${brand.name} ${model.name} (${year})`,
+    };
 
-      setLoadingGens(true);
-      try {
-        const res = await fetchVehicleGenerationsByModelId(modelId as number);
-        setGenerations(res.data);
-      } catch {
-        // ignore
-      } finally {
-        setLoadingGens(false);
-      }
-    },
-    [],
-  );
-
-  const handleGenChange = useCallback(
-    (genIdStr: string) => {
-      const genId = genIdStr === "" ? "" : Number(genIdStr);
-      setSelectedGenId(genId);
-
-      if (genId === "" || selectedBrandId === "" || selectedModelId === "") return;
-
-      const brand = brands.find((b) => b.id === selectedBrandId);
-      const model = models.find((m) => m.id === selectedModelId);
-      const gen = generations.find((g) => g.id === genId);
-      if (!brand || !model || !gen) return;
-
-      const yearStr = gen.yearEnd ? `${gen.yearStart}–${gen.yearEnd}` : `${gen.yearStart}–nay`;
-      const generationLabel = `${brand.name} ${model.name} (${yearStr})`;
-
-      const vehicle: SelectedVehicle = {
-        brandId: brand.id,
-        brandName: brand.name,
-        brandSlug: brand.slug,
-        modelId: model.id,
-        modelName: model.name,
-        generationId: gen.id,
-        generationName: yearStr,
-        generationLabel,
-      };
-
-      setSelected(vehicle);
-      setCurrentVehicle(vehicle);
-      onVehicleSelect?.(vehicle);
-    },
-    [brands, models, generations, selectedBrandId, selectedModelId, setSelected, onVehicleSelect],
-  );
+    setSelected(vehicle);
+    setCurrentVehicle(vehicle);
+    onVehicleSelect?.(vehicle);
+  }, [brands, models, selectedBrandId, selectedModelId, setSelected, onVehicleSelect]);
 
   const handleClear = useCallback(() => {
     clearSelected();
     setCurrentVehicle(null);
     setSelectedBrandId("");
     setSelectedModelId("");
-    setSelectedGenId("");
+    setSelectedYear("");
     setModels([]);
-    setGenerations([]);
     onVehicleSelect?.(null);
   }, [clearSelected, onVehicleSelect]);
 
@@ -164,12 +112,10 @@ const VehicleSelectorWidget: React.FC<VehicleSelectorWidgetProps> = ({
       return (
         <div className={styles.compact}>
           <span className={styles.vehicleMark} aria-hidden="true" />
-          <span className={styles.compactLabel} title={currentVehicle.generationLabel}>
-            {currentVehicle.brandName} {currentVehicle.modelName} {currentVehicle.generationName.split("–")[0]}
+          <span className={styles.compactLabel} title={currentVehicle.vehicleLabel}>
+            {currentVehicle.vehicleLabel}
           </span>
-          <button className={styles.clearBtn} onClick={handleClear} title="Bỏ chọn xe" aria-label="Bỏ chọn xe">
-            ✕
-          </button>
+          <button className={styles.clearBtn} onClick={handleClear} title="Bỏ chọn xe" aria-label="Bỏ chọn xe">×</button>
         </div>
       );
     }
@@ -183,12 +129,9 @@ const VehicleSelectorWidget: React.FC<VehicleSelectorWidgetProps> = ({
 
   const brandOptions = brands.map((b) => ({ value: String(b.id), label: b.name }));
   const modelOptions = models.map((m) => ({ value: String(m.id), label: m.name }));
-  const genOptions = generations.map((g) => {
-    const yr = g.yearEnd ? `${g.yearStart}–${g.yearEnd}` : `${g.yearStart}–nay`;
-    return { value: String(g.id), label: `${g.name} (${yr})` };
-  });
-
-  const canNavigate = selectedGenId !== "" && selectedBrandId !== "" && selectedModelId !== "";
+  const yearOptions = Array.from({ length: CURRENT_YEAR + 2 - 1990 + 1 }, (_, i) => CURRENT_YEAR + 2 - i)
+    .map((year) => ({ value: String(year), label: String(year) }));
+  const canNavigate = selectedBrandId !== "" && selectedModelId !== "" && selectedYear !== "";
 
   return (
     <div className={styles.widget}>
@@ -213,29 +156,24 @@ const VehicleSelectorWidget: React.FC<VehicleSelectorWidgetProps> = ({
           disabled={selectedBrandId === "" || loadingModels}
         />
         <Select
-          label="Đời xe"
-          placeholder={loadingGens ? "Đang tải..." : "-- Chọn đời --"}
-          options={genOptions}
-          value={String(selectedGenId)}
-          onChange={(e) => handleGenChange(e.target.value)}
-          disabled={selectedModelId === "" || loadingGens}
+          label="Năm xe"
+          placeholder="-- Chọn năm --"
+          options={yearOptions}
+          value={selectedYear}
+          onChange={(e) => handleYearChange(e.target.value)}
+          disabled={selectedModelId === ""}
         />
       </div>
       <div className={styles.ctaRow}>
         {canNavigate ? (
-          <Link
-            to={`/san-pham?vehicleGenerationId=${selectedGenId}`}
-            className={styles.ctaButton}
-          >
+          <Link to={`/san-pham?vehicleModelId=${selectedModelId}&vehicleYear=${selectedYear}`} className={styles.ctaButton}>
             Xem phụ tùng phù hợp <span aria-hidden="true">→</span>
           </Link>
         ) : (
-          <span className={styles.ctaHint}>Chọn đủ 3 cấp để tìm phụ tùng phù hợp</span>
+          <span className={styles.ctaHint}>Chọn hãng, dòng và năm xe để tìm phụ tùng phù hợp</span>
         )}
         {currentVehicle && (
-          <button className={styles.clearBtn} onClick={handleClear}>
-            ✕ Bỏ chọn
-          </button>
+          <button className={styles.clearBtn} onClick={handleClear}>× Bỏ chọn</button>
         )}
       </div>
     </div>
