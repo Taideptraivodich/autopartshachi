@@ -51,7 +51,8 @@ const SanPhamPage: React.FC = () => {
   const status = params.get('status') ?? '';
   const sortBy = (params.get('sortBy') as 'createdAt' | 'name' | null) ?? 'createdAt';
   const sortDir = (params.get('sortDir') as 'asc' | 'desc' | null) ?? 'desc';
-  const vehicleGenerationId = params.get('vehicleGenerationId') ?? '';
+  const vehicleModelId = params.get('vehicleModelId') ?? '';
+  const vehicleYear = params.get('vehicleYear') ?? '';
 
   useEffect(() => {
     Promise.all([
@@ -71,7 +72,8 @@ const SanPhamPage: React.FC = () => {
       status: status as 'con_hang' | 'het_hang' | 'ngung_kinh_doanh' | '',
       sortBy,
       sortDir,
-      vehicleGenerationId: vehicleGenerationId ? Number(vehicleGenerationId) : undefined,
+      vehicleModelId: vehicleModelId ? Number(vehicleModelId) : undefined,
+      vehicleYear: vehicleYear ? Number(vehicleYear) : undefined,
     })
       .then((res) => {
         setProducts(res.data);
@@ -82,7 +84,7 @@ const SanPhamPage: React.FC = () => {
         setTotal(0);
       })
       .finally(() => setLoading(false));
-  }, [page, brandId, categoryId, status, sortBy, sortDir, vehicleGenerationId]);
+  }, [page, brandId, categoryId, status, sortBy, sortDir, vehicleModelId, vehicleYear]);
 
   const roots = useMemo(() => categories.filter((category) => category.parentCategoryId === null), [categories]);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -95,16 +97,11 @@ const SanPhamPage: React.FC = () => {
     setParams(next);
   };
 
-  const clearFilters = () => {
-    setParams({ page: '1' });
-  };
+  const clearFilters = () => setParams({ page: '1' });
 
   return (
     <>
-      <MetaTags
-        title="Sản phẩm phụ tùng ô tô"
-        description="Khám phá danh mục phụ tùng ô tô theo thương hiệu, danh mục và tình trạng."
-      />
+      <MetaTags title="Sản phẩm phụ tùng ô tô" description="Khám phá danh mục phụ tùng ô tô theo thương hiệu, danh mục và tình trạng." />
       <main className={styles.page}>
         <div className="container">
           <div className={styles.breadcrumb}>
@@ -115,9 +112,7 @@ const SanPhamPage: React.FC = () => {
             <div>
               <p className={styles.eyebrow}>PARTS CATALOG</p>
               <h1 className={styles.title}>Sản phẩm</h1>
-              <p className={styles.subtitle}>
-                Tra cứu phụ tùng theo thương hiệu, danh mục hoặc xe tương thích.
-              </p>
+              <p className={styles.subtitle}>Tra cứu phụ tùng theo thương hiệu, danh mục hoặc xe tương thích.</p>
             </div>
             <button type="button" className={styles.filterToggle} onClick={() => setFiltersOpen((open) => !open)}>
               {filtersOpen ? 'Đóng bộ lọc' : 'Bộ lọc'}
@@ -179,11 +174,16 @@ const SanPhamPage: React.FC = () => {
                 </select>
               </label>
 
-              {vehicleGenerationId && (
+              {vehicleModelId && (
                 <div className={styles.vehicleFilter}>
                   <span className={styles.vehicleLabel}>XE ĐÃ CHỌN</span>
-                  <p>Đang hiển thị sản phẩm tương thích với đời xe đã chọn.</p>
-                  <button type="button" onClick={() => updateParam('vehicleGenerationId', '')}>Bỏ bộ lọc xe →</button>
+                  <p>
+                    Đang hiển thị sản phẩm tương thích với dòng xe
+                    {vehicleYear ? ` trong năm ${vehicleYear}.` : '.'}
+                  </p>
+                  <button type="button" onClick={() => { updateParam('vehicleModelId', ''); updateParam('vehicleYear', ''); }}>
+                    Bỏ bộ lọc xe →
+                  </button>
                 </div>
               )}
             </aside>
