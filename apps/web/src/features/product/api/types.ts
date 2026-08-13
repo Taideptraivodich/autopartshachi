@@ -7,14 +7,13 @@ export interface ProductFilterParams {
   sortBy?: "createdAt" | "name";
   sortDir?: "asc" | "desc";
   page?: number;
-  vehicleGenerationId?: number;
+  vehicleModelId?: number;
+  vehicleYear?: number;
 }
 
 export interface VehicleModelListResponse {
   data: VehicleModelItem[];
 }
-
-// ─── Product types (mirror API response shapes) ────────────────────────────────
 
 export interface ProductBrandSummary {
   id: number;
@@ -61,7 +60,6 @@ export interface CompatibilityEntry {
   brandSlug: string;
   modelName: string;
   modelSlug: string;
-  generationName: string;
   yearStart: number;
   yearEnd: number | null;
   installationPosition: string;
@@ -95,8 +93,6 @@ export interface CategoryListItem {
   displayOrder: number;
 }
 
-// ─── API response wrappers ─────────────────────────────────────────────────────
-
 export interface PaginatedResponse<T> {
   data: T[];
   meta: { page: number; pageSize: number; total: number };
@@ -112,7 +108,6 @@ export interface CategoryDetailResponse {
   data: CategoryDetail;
 }
 
-// ── Brand (product brand / thương hiệu phụ tùng) ──────────────────────────
 export interface BrandListItem {
   id: number;
   name: string;
@@ -126,7 +121,6 @@ export interface BrandDetailResponse {
   products: PaginatedResponse<ProductListItem>;
 }
 
-// ── Vehicle brand (hãng xe) ────────────────────────────────────────────────
 export interface VehicleBrandListItem {
   id: number;
   name: string;
@@ -149,8 +143,6 @@ export interface VehicleGenerationItem {
   yearStart: number;
   yearEnd: number | null;
 }
-
-// ── Search / OEM ─────────────────────────────────────────────
 
 export interface OemResult {
   productId: number;
