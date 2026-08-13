@@ -28,11 +28,11 @@ ALTER TABLE "compatibility"
     REFERENCES "vehicle_model"("id")
     ON DELETE CASCADE;
 
-CREATE UNIQUE INDEX "idx_compatibility_unique"
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_compatibility_unique"
   ON "compatibility" ("product_id", "vehicle_model_id", "year_start", "installation_position");
 
-CREATE INDEX "idx_compatibility_product_id"
+CREATE INDEX IF NOT EXISTS "idx_compatibility_product_id"
   ON "compatibility" ("product_id");
 
-CREATE INDEX "idx_compatibility_vehicle_model_id"
+CREATE INDEX IF NOT EXISTS "idx_compatibility_vehicle_model_id"
   ON "compatibility" ("vehicle_model_id");
