@@ -17,10 +17,13 @@ function slugify(name: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+function isUniqueViolation(err: unknown): boolean {
+  return typeof err === "object" && err !== null && "code" in err && (err as { code?: unknown }).code === "23505";
+}
+
 export function createAdminBrandRouter(brandService: BrandService): Router {
   const r = Router();
 
-  // GET /api/admin/thuong-hieu
   r.get("/", async (_req: Request, res: Response) => {
     try {
       const data = await brandService.adminListBrands();
@@ -31,24 +34,32 @@ export function createAdminBrandRouter(brandService: BrandService): Router {
     }
   });
 
-  // POST /api/admin/thuong-hieu
   r.post("/", async (req: Request, res: Response) => {
     try {
       const { name, isActive, logoUrl } = req.body as { name?: string; isActive?: boolean; logoUrl?: string | null };
       if (!name?.trim()) {
-        res.status(400).json({ error: "name is required" });
+        res.status(400).json({ error: "Tên thương hiệu là bắt buộc" });
         return;
       }
-      const slug = slugify(name.trim());
-      const brand = await brandService.adminCreateBrand({ name: name.trim(), slug, isActive, logoUrl });
+      const trimmedName = name.trim();
+      const slug = slugify(trimmedName);
+      const existing = (await brandService.adminListBrands()).find((brand) => brand.slug === slug);
+      if (existing) {
+        res.status(409).json({ error: `Thương hiệu "${existing.name}" đã tồn tại.` });
+        return;
+      }
+      const brand = await brandService.adminCreateBrand({ name: trimmedName, slug, isActive, logoUrl });
       res.status(201).json({ data: brand });
     } catch (err) {
       logger.error("adminCreateBrand error", err);
+      if (isUniqueViolation(err)) {
+        res.status(409).json({ error: "Thương hiệu này đã tồn tại." });
+        return;
+      }
       res.status(500).json({ error: "Internal server error" });
     }
   });
 
-  // PUT /api/admin/thuong-hieu/:id
   r.put("/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(String(req.params.id), 10);
@@ -63,11 +74,14 @@ export function createAdminBrandRouter(brandService: BrandService): Router {
       res.json({ data: brand });
     } catch (err) {
       logger.error("adminUpdateBrand error", err);
+      if (isUniqueViolation(err)) {
+        res.status(409).json({ error: "Tên thương hiệu hoặc slug đã tồn tại." });
+        return;
+      }
       res.status(500).json({ error: "Internal server error" });
     }
   });
 
-  // DELETE /api/admin/thuong-hieu/:id
   r.delete("/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(String(req.params.id), 10);
