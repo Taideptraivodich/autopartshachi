@@ -13,7 +13,7 @@
 .contactItem > span:first-child::before { content:'•'; font-size:12px; }
 .contactItem a { color:var(--color-secondary-200); text-decoration:none; }
 .contactItem a:hover { color:#fff; text-decoration:none; }
-.groupTitle { margin-bottom:var(--space-4); color:#fff; font-size:10px; font-weight:var(--font-semibold); letter-spacing:.16em; text-transform:uppercase; }
+.groupTitle { margin-bottom:var(--space-4); color:#fff; font-size:var(--text-xs); font-weight:var(--font-semibold); letter-spacing:.16em; text-transform:uppercase; }
 .linkList { list-style:none; display:flex; flex-direction:column; gap:10px; }
 .link { display:inline-block; color:var(--color-secondary-300); font-size:var(--text-sm); text-decoration:none; transition:color var(--transition-fast); }
 .link:hover { color:#fff; text-decoration:none; }
@@ -21,4 +21,4 @@
 .ctaButton { display:inline-flex; align-items:center; min-height:40px; padding:0 16px; background:#fff; color:var(--color-secondary-900); border:none; border-radius:0; font-size:var(--text-sm); font-weight:var(--font-semibold); text-decoration:none; }
 .ctaButton:hover { background:var(--color-secondary-100); color:var(--color-secondary-900); text-decoration:none; }
 .bottom { border-top:1px solid rgba(255,255,255,.12); padding:14px 0; }
-.copyright { margin:0; color:var(--color-secondary-400); font-size:11px; text-align:center; }
+.copyright { margin:0; color:var(--color-secondary-400); font-size:var(--text-xs); text-align:center; }

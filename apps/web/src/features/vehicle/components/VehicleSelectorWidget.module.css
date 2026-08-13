@@ -1,14 +1,13 @@
 .widget {
   background: transparent;
-  border: 0;
-  border-radius: 0;
+  border: none;
   padding: 0;
 }
 
 .widgetTitle {
   font-size: var(--text-base);
   font-weight: var(--font-semibold);
-  margin: 0 0 var(--space-7);
+  margin: 0 0 var(--space-6);
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -28,7 +27,7 @@
 
 .vehicleMark::before,
 .vehicleMark::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -4px;
   width: 5px;
@@ -38,16 +37,23 @@
   background: var(--color-surface);
 }
 
-.vehicleMark::before { left: 1px; }
-.vehicleMark::after { right: 1px; }
+.vehicleMark::before {
+  left: 1px;
+}
+.vehicleMark::after {
+  right: 1px;
+}
 
 .dropdownRow {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-6);
+  margin-bottom: var(--space-4); /* thêm dòng này */
 }
 
-.dropdownRow > * { min-width: 0; }
+.dropdownRow > * {
+  min-width: 0;
+}
 
 .dropdownRow label,
 .dropdownRow select {
@@ -68,7 +74,7 @@
   gap: var(--space-2);
   min-height: 44px;
   padding: 0 var(--space-5);
-  background: var(--color-primary);
+  background: var(--color-primary-600, #1a6fb5);
   color: #fff;
   border-radius: 0;
   text-decoration: none;
@@ -78,7 +84,7 @@
 }
 
 .ctaButton:hover {
-  opacity: 0.88;
+  background: var(--color-primary-700, #155a96);
   text-decoration: none;
 }
 
@@ -119,8 +125,13 @@
   font-size: var(--text-sm);
 }
 
-.clearBtn:hover { color: var(--color-text-primary); }
+.clearBtn:hover {
+  color: var(--color-text-primary);
+}
 
 @media (max-width: 720px) {
-  .dropdownRow { grid-template-columns: 1fr; gap: var(--space-5); }
+  .dropdownRow {
+    grid-template-columns: 1fr;
+    gap: var(--space-5);
+  }
 }

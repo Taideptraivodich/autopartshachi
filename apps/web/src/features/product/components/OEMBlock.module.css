@@ -61,7 +61,7 @@
 
 .statusBadge {
   display: inline-block;
-  font-size: 11px;
+  font-size: var(--text-xs);
   padding: 2px 8px;
   border-radius: var(--radius-full);
   font-weight: var(--font-medium);
