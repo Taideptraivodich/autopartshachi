@@ -1,10 +1,6 @@
 import { adminApiFetch } from "./adminApiFetch";
 import type { ProductListItem, PaginatedResponse } from "../../product/api/types";
 
-// ─────────────────────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────────────────────
-
 export interface AdminProductListParams {
   page?: number;
   pageSize?: number;
@@ -22,7 +18,9 @@ export interface AdminProductImagePayload {
 }
 
 export interface AdminProductCompatibilityPayload {
-  vehicleGenerationId: number;
+  vehicleModelId: number;
+  yearStart: number;
+  yearEnd?: number | null;
   installationPosition: string;
 }
 
@@ -55,10 +53,6 @@ export interface AdminProductDetail {
   oemCodes: string[];
   compatibility: AdminProductCompatibilityPayload[];
 }
-
-// ─────────────────────────────────────────────────────────────
-// API calls
-// ─────────────────────────────────────────────────────────────
 
 export async function listProductsAdmin(
   params: AdminProductListParams = {},
