@@ -6,9 +6,8 @@ export interface SelectedVehicle {
   brandSlug: string;
   modelId: number;
   modelName: string;
-  generationId: number;
-  generationName: string;  // ví dụ "2019–2023"
-  generationLabel: string; // ví dụ "Toyota Camry 2.5Q (2019–2023)"
+  year: number;
+  vehicleLabel: string;
 }
 
 export function useVehicleSelector() {
