@@ -189,7 +189,14 @@ const AdminProductFormPage: React.FC = () => {
           parentCategoryId: null,
           isActive: true,
         });
-        setCategories((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
+        const createdCategory: CategoryListItem = {
+          id: created.id,
+          name: created.name,
+          slug: created.slug,
+          parentCategoryId: created.parentCategoryId,
+          displayOrder: 0,
+        };
+        setCategories((prev) => [...prev, createdCategory].sort((a, b) => a.name.localeCompare(b.name)));
         setCategoryIds((prev) => (prev.includes(created.id) ? prev : [...prev, created.id]));
       }
       closeQuickCreate();
