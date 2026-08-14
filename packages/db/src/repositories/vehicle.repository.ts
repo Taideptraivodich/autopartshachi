@@ -33,7 +33,7 @@ export interface VehicleGenerationInput {
 }
 
 export interface VehicleCompatibilityYearRange {
-  yearStart: number;
+  yearStart: number | null;
   yearEnd: number | null;
 }
 
@@ -78,8 +78,15 @@ export class VehicleRepository {
     return ranges.map((range, index) => ({
       id: -(index + 1),
       vehicleModelId: modelId,
-      name: range.yearEnd == null ? `${range.yearStart} – nay` : `${range.yearStart} – ${range.yearEnd}`,
-      yearStart: range.yearStart,
+      name:
+        range.yearStart == null && range.yearEnd == null
+          ? "Tất cả các đời"
+          : range.yearStart == null
+            ? `trước ${range.yearEnd}`
+            : range.yearEnd == null
+              ? `${range.yearStart} – nay`
+              : `${range.yearStart} – ${range.yearEnd}`,
+      yearStart: range.yearStart ?? 0,
       yearEnd: range.yearEnd,
       isActive: true,
       createdAt: now,
@@ -178,7 +185,7 @@ export class VehicleRepository {
 
   async setCompatibility(
     productId: number,
-    entries: { vehicleModelId: number; yearStart: number; yearEnd?: number | null; installationPosition: string; notes?: string | null }[],
+    entries: { vehicleModelId: number; yearStart: number | null; yearEnd?: number | null; installationPosition: string; notes?: string | null }[],
   ): Promise<void> {
     await this.db.delete(compatibility).where(eq(compatibility.productId, productId));
     if (entries.length === 0) return;
@@ -194,7 +201,7 @@ export class VehicleRepository {
 
   async findCompatibilityByProductId(productId: number): Promise<{
     vehicleModelId: number;
-    yearStart: number;
+    yearStart: number | null;
     yearEnd: number | null;
     installationPosition: string;
     notes: string | null;
