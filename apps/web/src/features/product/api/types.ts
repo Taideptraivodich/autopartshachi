@@ -60,7 +60,7 @@ export interface CompatibilityEntry {
   brandSlug: string;
   modelName: string;
   modelSlug: string;
-  yearStart: number;
+  yearStart: number | null;
   yearEnd: number | null;
   installationPosition: string;
   notes: string | null;
