@@ -39,7 +39,7 @@ export type ProductDetail = Product & {
     brandSlug: string;
     modelName: string;
     modelSlug: string;
-    yearStart: number;
+    yearStart: number | null;
     yearEnd: number | null;
   }[];
 };
@@ -148,7 +148,9 @@ export class ProductRepository {
     if (vehicleModelId !== undefined) {
       const compatibilityConditions: SQL[] = [eq(compatibility.vehicleModelId, vehicleModelId)];
       if (vehicleYear !== undefined) {
-        compatibilityConditions.push(lte(compatibility.yearStart, vehicleYear));
+        compatibilityConditions.push(
+          or(isNull(compatibility.yearStart), lte(compatibility.yearStart, vehicleYear))!,
+        );
         compatibilityConditions.push(
           or(isNull(compatibility.yearEnd), gte(compatibility.yearEnd, vehicleYear))!,
         );
