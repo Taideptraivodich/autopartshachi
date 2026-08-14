@@ -14,7 +14,9 @@ export const compatibility = pgTable(
     vehicleModelId: bigint("vehicle_model_id", { mode: "number" })
       .notNull()
       .references(() => vehicleModel.id, { onDelete: "cascade" }),
-    yearStart: integer("year_start").notNull(),
+    // NULL lower bound = compatible with all model years up to yearEnd.
+    yearStart: integer("year_start"),
+    // NULL upper bound = from yearStart through current/future years.
     yearEnd: integer("year_end"),
     installationPosition: text("installation_position").notNull().default("chung"),
     notes: text("notes"),
@@ -25,10 +27,15 @@ export const compatibility = pgTable(
       table.productId,
       table.vehicleModelId,
       table.yearStart,
+      table.yearEnd,
       table.installationPosition,
     ),
     index("idx_compatibility_product_id").on(table.productId),
     index("idx_compatibility_vehicle_model_id").on(table.vehicleModelId),
+    check(
+      "chk_compatibility_year_range",
+      sql`${table.yearStart} IS NULL OR ${table.yearEnd} IS NULL OR ${table.yearEnd} >= ${table.yearStart}`,
+    ),
     check(
       "chk_compatibility_position",
       sql`${table.installationPosition} IN ('chung', 'truoc', 'sau', 'truoc_trai', 'truoc_phai', 'sau_trai', 'sau_phai')`,
