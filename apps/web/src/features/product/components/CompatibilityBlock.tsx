@@ -17,7 +17,7 @@ const POSITION_LABEL: Record<string, string> = {
 };
 
 interface YearRangeEntry {
-  yearStart: number;
+  yearStart: number | null;
   yearEnd: number | null;
   installationPosition: string;
   notes: string | null;
@@ -35,8 +35,11 @@ interface BrandGroup {
   models: ModelGroup[];
 }
 
-function formatYearRange(yearStart: number, yearEnd: number | null): string {
-  return yearEnd ? `${yearStart} – ${yearEnd}` : `${yearStart} – nay`;
+function formatYearRange(yearStart: number | null, yearEnd: number | null): string {
+  if (yearStart == null && yearEnd == null) return 'Từ trước – nay';
+  if (yearStart == null) return `Từ trước – ${yearEnd}`;
+  if (yearEnd == null) return `${yearStart} – nay`;
+  return `${yearStart} – ${yearEnd}`;
 }
 
 function groupEntries(entries: CompatibilityEntry[]): BrandGroup[] {
@@ -90,7 +93,7 @@ const CompatibilityBlock: React.FC<CompatibilityBlockProps> = ({ entries }) => {
                       {model.entries.map((entry, idx) => {
                         const posLabel = POSITION_LABEL[entry.installationPosition] ?? '';
                         return (
-                          <span key={`${entry.yearStart}-${entry.yearEnd ?? 'now'}-${idx}`} className={styles.genTag}>
+                          <span key={`${entry.yearStart ?? 'before'}-${entry.yearEnd ?? 'now'}-${idx}`} className={styles.genTag}>
                             <span className={styles.genYear}>{formatYearRange(entry.yearStart, entry.yearEnd)}</span>
                             {posLabel && <span className={styles.genPosition}>{posLabel}</span>}
                           </span>
