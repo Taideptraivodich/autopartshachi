@@ -19,15 +19,15 @@ const Footer: React.FC = () => {
     <div className={`container ${styles.inner}`}>
       {/* Brand */}
       <div className={styles.brand}>
-        <Link to={ROUTES.HOME} className={styles.logoLink} aria-label={`${SITE_CONFIG.name} – Trang chủ`}>
-          <span className={styles.logoIcon} aria-hidden="true">⚙</span>
+        <Link to={ROUTES.HOME} className={styles.logoLink} aria-label="HACHI – Trang chủ">
+          <img className={styles.logoImage} src="/logo.png" alt="HACHI" />
           <span className={styles.logoText}>{SITE_CONFIG.name}</span>
         </Link>
         <p className={styles.tagline}>{SITE_CONFIG.tagline}</p>
         <div className={styles.contactInfo}>
           <p className={styles.contactItem}>
             <span aria-hidden="true">📞</span>
-            <a href={`tel:${siteSettings.phone}`}>{siteSettings.phone}</a>
+            <a href={`tel:${siteSettings.phone || SITE_CONFIG.phone}`}>{siteSettings.phone || SITE_CONFIG.phone}</a>
           </p>
           <p className={styles.contactItem}>
             <span aria-hidden="true">✉</span>
@@ -68,7 +68,7 @@ const Footer: React.FC = () => {
         </ul>
       </div>
 
-      {/* Contact CTA placeholder */}
+      {/* Contact CTA */}
       <div className={styles.linkGroup}>
         <h3 className={styles.groupTitle}>Tư vấn nhanh</h3>
         <p className={styles.ctaText}>
