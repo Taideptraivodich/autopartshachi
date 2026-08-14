@@ -11,6 +11,7 @@ import {
   type VehicleBrandInput,
   type VehicleModelInput,
   type VehicleGenerationInput,
+  type VehicleCompatibilityYearRange,
 } from 'autoparts-db/repositories';
 
 export interface VehicleBrandItem {
@@ -34,6 +35,8 @@ export interface VehicleGenerationItem {
   yearStart: number;
   yearEnd: number | null;
 }
+
+export interface VehicleCompatibilityYearRangeItem extends VehicleCompatibilityYearRange {}
 
 export interface VehicleBrandDetail extends VehicleBrandItem {
   models: VehicleModelItem[];
@@ -77,7 +80,12 @@ export class VehicleService {
     return models.map(mapModel);
   }
 
-  /** Return generations for a given model id — used by the admin compatibility form. */
+  /** Public storefront data: year ranges that are actually used by visible products. */
+  async getCompatibilityYearRangesByModelId(modelId: number): Promise<VehicleCompatibilityYearRangeItem[]> {
+    return this.vehicleRepo.findCompatibilityYearRangesByModelId(modelId);
+  }
+
+  /** Legacy generation endpoint retained for admin CRUD compatibility. */
   async getGenerationsByModelId(modelId: number): Promise<VehicleGenerationItem[]> {
     const rows = await this.vehicleRepo.findGenerations(modelId);
     return rows.map(mapGeneration);
