@@ -3,9 +3,8 @@
 @media (min-width:640px){ .inner{grid-template-columns:1.2fr 1fr;} }
 @media (min-width:1024px){ .inner{grid-template-columns:2fr 1fr 1fr 1.4fr;} }
 .logoLink { display:inline-flex; align-items:center; gap:10px; text-decoration:none; margin-bottom:var(--space-3); }
-.logoIcon { width:28px; height:28px; display:flex; align-items:center; justify-content:center; border:1px solid rgba(255,255,255,.28); color:#fff; font-size:0; }
-.logoIcon::before { content:'H'; font-size:12px; font-weight:800; }
-.logoText { font-size:var(--text-lg); font-weight:var(--font-bold); color:#fff; letter-spacing:-.03em; }
+.logoImage { width:34px; height:34px; object-fit:contain; flex-shrink:0; }
+.logoText { max-width:360px; font-size:var(--text-base); line-height:1.35; font-weight:var(--font-bold); color:#fff; letter-spacing:-.02em; }
 .tagline { max-width:420px; margin-bottom:var(--space-5); font-size:var(--text-sm); color:var(--color-secondary-300); line-height:var(--leading-relaxed); }
 .contactInfo { display:flex; flex-direction:column; gap:10px; }
 .contactItem { display:flex; align-items:flex-start; gap:10px; font-size:var(--text-sm); color:var(--color-secondary-300); }
