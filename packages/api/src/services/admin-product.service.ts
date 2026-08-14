@@ -31,7 +31,7 @@ export interface CreateProductPayload {
   oemCodes?: string[];
   compatibility?: {
     vehicleModelId: number;
-    yearStart: number;
+    yearStart: number | null;
     yearEnd?: number | null;
     installationPosition: string;
     notes?: string | null;
@@ -61,7 +61,7 @@ export interface AdminProductDetail {
   oemCodes: string[];
   compatibility: {
     vehicleModelId: number;
-    yearStart: number;
+    yearStart: number | null;
     yearEnd: number | null;
     installationPosition: string;
     notes: string | null;
