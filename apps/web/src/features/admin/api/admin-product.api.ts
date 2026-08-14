@@ -19,7 +19,7 @@ export interface AdminProductImagePayload {
 
 export interface AdminProductCompatibilityPayload {
   vehicleModelId: number;
-  yearStart: number;
+  yearStart: number | null;
   yearEnd?: number | null;
   installationPosition: string;
 }
