@@ -9,6 +9,7 @@ import CompatibilityBlock from '../components/CompatibilityBlock';
 import { fetchProductBySlug } from '../api/product.api';
 import RelatedProducts from '../components/RelatedProducts';
 import type { ProductDetail } from '../api/types';
+import { SITE_CONFIG } from '../../../constants/site';
 import { useSiteSettings } from '../../../context/SiteSettingsContext';
 import styles from './ProductDetailPage.module.css';
 
@@ -20,6 +21,13 @@ function buildZaloOrderLink(product: ProductDetail, quantity: number, zaloPhone:
     `(Vui lòng cho biết số lượng và địa chỉ nhận hàng để được báo giá)`;
   const phone = zaloPhone.replace(/\D/g, '');
   return { url: `https://zalo.me/${phone}?text=${encodeURIComponent(message)}`, message };
+}
+
+function absoluteUrl(value: string | null | undefined): string | undefined {
+  if (!value) return undefined;
+  return value.startsWith('http://') || value.startsWith('https://')
+    ? value
+    : `${SITE_CONFIG.url}${value.startsWith('/') ? '' : '/'}${value}`;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -103,14 +111,36 @@ const ProductDetailPage: React.FC = () => {
     ...(product.categories[0] ? [{ label: product.categories[0].name, href: `/danh-muc/${product.categories[0].slug}` }] : []),
     { label: product.name },
   ];
+  const productUrl = `${SITE_CONFIG.url}/san-pham/${product.slug}`;
+  const imageUrl = absoluteUrl(product.featuredImage);
+  const productDescription = product.metaDescription || product.description || `Phụ tùng ${product.name} – SKU: ${product.sku} tại HACHI.`;
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.metaTitle || product.name,
+    description: productDescription,
+    sku: product.sku,
+    url: productUrl,
+    ...(imageUrl ? { image: [imageUrl] } : {}),
+    ...(product.brand ? { brand: { '@type': 'Brand', name: product.brand.name } } : {}),
+    ...(product.categories[0] ? { category: product.categories[0].name } : {}),
+    ...(product.status ? {
+      additionalProperty: {
+        '@type': 'PropertyValue',
+        name: 'Tình trạng',
+        value: STATUS_LABEL[product.status] ?? product.status,
+      },
+    } : {}),
+  };
 
   return (
     <>
       <MetaTags
-        title={product.name}
-        description={product.description ?? `Phụ tùng ${product.name} – SKU: ${product.sku}`}
-        ogImage={product.featuredImage ?? undefined}
+        title={product.metaTitle || product.name}
+        description={productDescription}
+        ogImage={imageUrl}
       />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
 
       <div className="container">
         <div className={styles.page}>
