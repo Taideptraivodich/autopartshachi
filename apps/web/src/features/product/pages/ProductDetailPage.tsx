@@ -114,23 +114,23 @@ const ProductDetailPage: React.FC = () => {
   const productUrl = `${SITE_CONFIG.url}/san-pham/${product.slug}`;
   const imageUrl = absoluteUrl(product.featuredImage);
   const productDescription = product.metaDescription || product.description || `Phụ tùng ${product.name} – SKU: ${product.sku} tại HACHI.`;
-  const schema = {
+  const breadcrumbSchema = {
     '@context': 'https://schema.org',
-    '@type': 'Product',
+    '@type': 'BreadcrumbList',
+    itemListElement: breadcrumbItems.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.label,
+      ...(item.href ? { item: `${SITE_CONFIG.url}${item.href}` } : { item: productUrl }),
+    })),
+  };
+  const webPageSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
     name: product.metaTitle || product.name,
     description: productDescription,
-    sku: product.sku,
     url: productUrl,
-    ...(imageUrl ? { image: [imageUrl] } : {}),
-    ...(product.brand ? { brand: { '@type': 'Brand', name: product.brand.name } } : {}),
-    ...(product.categories[0] ? { category: product.categories[0].name } : {}),
-    ...(product.status ? {
-      additionalProperty: {
-        '@type': 'PropertyValue',
-        name: 'Tình trạng',
-        value: STATUS_LABEL[product.status] ?? product.status,
-      },
-    } : {}),
+    ...(imageUrl ? { primaryImageOfPage: { '@type': 'ImageObject', contentUrl: imageUrl } } : {}),
   };
 
   return (
@@ -140,7 +140,7 @@ const ProductDetailPage: React.FC = () => {
         description={productDescription}
         ogImage={imageUrl}
       />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([breadcrumbSchema, webPageSchema]) }} />
 
       <div className="container">
         <div className={styles.page}>
