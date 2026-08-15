@@ -30,6 +30,21 @@ function absoluteUrl(value: string | null | undefined): string | undefined {
     : `${SITE_CONFIG.url}${value.startsWith('/') ? '' : '/'}${value}`;
 }
 
+function buildProductSeo(product: ProductDetail): { title: string; description: string } {
+  const brandName = product.brand?.name;
+  const modelNames = [...new Set(product.compatibility.map((entry) => entry.modelName))].slice(0, 4);
+  const compatibilityText = modelNames.length > 0 ? ` Tương thích ${modelNames.join(', ')}.` : '';
+  const oemText = product.oemCodes.length > 0
+    ? ` Mã OEM: ${product.oemCodes.slice(0, 4).map((code) => code.code).join(', ')}.`
+    : '';
+
+  const title = product.metaTitle?.trim() || `${product.name} | HACHI`;
+  const description = product.metaDescription?.trim()
+    || `${product.name}${brandName ? ` – thương hiệu ${brandName}.` : '.'} SKU ${product.sku}.${compatibilityText}${oemText}`;
+
+  return { title, description };
+}
+
 const STATUS_LABEL: Record<string, string> = {
   con_hang: 'Còn hàng',
   het_hang: 'Hết hàng',
@@ -113,7 +128,7 @@ const ProductDetailPage: React.FC = () => {
   ];
   const productUrl = `${SITE_CONFIG.url}/san-pham/${product.slug}`;
   const imageUrl = absoluteUrl(product.featuredImage);
-  const productDescription = product.metaDescription || product.description || `Phụ tùng ${product.name} – SKU: ${product.sku} tại HACHI.`;
+  const { title: seoTitle, description: seoDescription } = buildProductSeo(product);
   const breadcrumbSchema = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -121,25 +136,21 @@ const ProductDetailPage: React.FC = () => {
       '@type': 'ListItem',
       position: index + 1,
       name: item.label,
-      ...(item.href ? { item: `${SITE_CONFIG.url}${item.href}` } : { item: productUrl }),
+      item: item.href ? `${SITE_CONFIG.url}${item.href}` : productUrl,
     })),
   };
   const webPageSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
-    name: product.metaTitle || product.name,
-    description: productDescription,
+    name: seoTitle,
+    description: seoDescription,
     url: productUrl,
     ...(imageUrl ? { primaryImageOfPage: { '@type': 'ImageObject', contentUrl: imageUrl } } : {}),
   };
 
   return (
     <>
-      <MetaTags
-        title={product.metaTitle || product.name}
-        description={productDescription}
-        ogImage={imageUrl}
-      />
+      <MetaTags title={seoTitle} description={seoDescription} ogImage={imageUrl} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([breadcrumbSchema, webPageSchema]) }} />
 
       <div className="container">
