@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import type { CompatibilityEntry } from '../api/types';
 import styles from './CompatibilityBlock.module.css';
 
@@ -88,7 +89,13 @@ const CompatibilityBlock: React.FC<CompatibilityBlockProps> = ({ entries }) => {
               <div className={styles.models}>
                 {brand.models.map((model) => (
                   <div key={model.modelSlug} className={styles.modelRow}>
-                    <span className={styles.modelName}>{model.modelName}</span>
+                    <Link
+                      to={`/hang-xe/${brand.brandSlug}/${model.modelSlug}`}
+                      className={styles.modelName}
+                      title={`Phụ tùng ${brand.brandName} ${model.modelName}`}
+                    >
+                      {model.modelName}
+                    </Link>
                     <div className={styles.generations}>
                       {model.entries.map((entry, idx) => {
                         const posLabel = POSITION_LABEL[entry.installationPosition] ?? '';
