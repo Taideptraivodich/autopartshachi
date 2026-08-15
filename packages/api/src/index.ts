@@ -100,7 +100,7 @@ const authController = new AuthController(authService);
 const productController = new ProductController(productService);
 const categoryController = new CategoryController(categoryService);
 const brandController = new BrandController(brandService);
-const vehicleController = new VehicleController(vehicleService);
+const vehicleController = new VehicleController(vehicleRepo);
 const searchController = new SearchController(searchService);
 const oemController = new OemController(oemService);
 const adminProductController = new AdminProductController(adminProductService, productService);
@@ -113,6 +113,7 @@ const adminSettingsController = new AdminSettingsController(settingsService);
 
 const app = express();
 const PORT = process.env.API_PORT ?? 3001;
+const SITE_URL = "https://phutunghachi.com";
 
 app.use(cors({ origin: ["http://localhost:3000", "http://localhost:5173"] }));
 app.use(express.json({ limit: "10mb" })); // tăng limit cho base64 ảnh
@@ -123,6 +124,90 @@ app.use("/uploads", express.static(join(process.cwd(), "public", "uploads")));
 // Health check
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", service: "autoparts-api", version: "06" });
+});
+
+function xmlEscape(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;");
+}
+
+function sitemapUrl(path: string, lastmod?: Date | null): string {
+  const lastmodTag = lastmod ? `<lastmod>${lastmod.toISOString()}</lastmod>` : "";
+  return `<url><loc>${xmlEscape(`${SITE_URL}${path}`)}</loc>${lastmodTag}</url>`;
+}
+
+// Dynamic sitemap: keeps product/category/brand/vehicle URLs in sync with the DB.
+app.get("/sitemap.xml", async (_req, res) => {
+  try {
+    const urls: string[] = [
+      sitemapUrl("/"),
+      sitemapUrl("/san-pham"),
+      sitemapUrl("/hang-xe"),
+      sitemapUrl("/danh-muc"),
+      sitemapUrl("/thuong-hieu"),
+      sitemapUrl("/blog"),
+      sitemapUrl("/lien-he"),
+    ];
+
+    const [categories, brands, vehicleBrands] = await Promise.all([
+      categoryRepo.findAll(),
+      brandRepo.findAll(),
+      vehicleRepo.findBrands(),
+    ]);
+
+    for (const category of categories) {
+      if (category.isActive) {
+        urls.push(sitemapUrl(`/danh-muc/${category.slug}`, category.updatedAt));
+      }
+    }
+
+    for (const brand of brands) {
+      urls.push(sitemapUrl(`/thuong-hieu/${brand.slug}`, brand.updatedAt));
+    }
+
+    for (const vehicleBrand of vehicleBrands) {
+      urls.push(sitemapUrl(`/hang-xe/${vehicleBrand.slug}`, vehicleBrand.updatedAt));
+      const models = await vehicleRepo.findModels(vehicleBrand.id);
+      for (const model of models) {
+        urls.push(sitemapUrl(`/hang-xe/${vehicleBrand.slug}/${model.slug}`, model.updatedAt));
+      }
+    }
+
+    const pageSize = 100;
+    let page = 1;
+    while (true) {
+      const result = await productRepo.findMany({
+        page,
+        pageSize,
+        onlyVisible: true,
+        sortBy: "createdAt",
+        sortDir: "asc",
+      });
+
+      for (const product of result.data) {
+        urls.push(sitemapUrl(`/san-pham/${product.slug}`, product.updatedAt ?? product.createdAt));
+      }
+
+      if (page >= result.totalPages || result.data.length === 0) break;
+      page += 1;
+    }
+
+    const xml = [
+      '<?xml version="1.0" encoding="UTF-8"?>',
+      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+      ...urls,
+      "</urlset>",
+    ].join("\n");
+
+    res.type("application/xml").set("Cache-Control", "public, max-age=300").send(xml);
+  } catch (error) {
+    logger.error("Failed to generate sitemap", error);
+    res.status(500).type("text/plain").send("Sitemap generation failed");
+  }
 });
 
 // Routes — admin (login public, rest protected by requireAdmin middleware)
