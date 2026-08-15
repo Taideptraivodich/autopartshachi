@@ -50,6 +50,7 @@ const SearchPage: React.FC = () => {
             ? `Kết quả tìm kiếm cho "${query}" – ${total} phụ tùng ô tô tại Hachi Việt Nam`
             : 'Tìm kiếm phụ tùng ô tô theo tên, mã SKU, mã OEM hoặc thương hiệu tại Hachi Việt Nam'
         }
+        noIndex
       />
 
       <main className={styles.page}>
