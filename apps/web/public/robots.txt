@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /500
+Disallow: /404
+Disallow: /tim-kiem
+
+Sitemap: https://phutunghachi.com/sitemap.xml
