@@ -1,8 +1,9 @@
 export const SITE_CONFIG = {
   name: "CÔNG TY TNHH PHỤ TÙNG Ô TÔ HACHI",
-  tagline: "MST: 3603812751",
-  description: "CÔNG TY TNHH PHỤ TÙNG Ô TÔ HACHI.",
-  url: "https://phutuong.vn",
+  tagline: "Phụ tùng ô tô chính hãng và aftermarket",
+  description:
+    "Phụ tùng ô tô HACHI – tra cứu theo hãng xe, đời xe, mã OEM và danh mục phụ tùng. Tư vấn nhanh, thông tin rõ ràng.",
+  url: "https://phutunghachi.com",
   phone: "0817600050",
   email: "Hachiauto139@gmail.com",
   address:
