@@ -139,6 +139,22 @@ const ProductDetailPage: React.FC = () => {
       item: item.href ? `${SITE_CONFIG.url}${item.href}` : productUrl,
     })),
   };
+  const productSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    sku: product.sku,
+    url: productUrl,
+    description: seoDescription,
+    ...(imageUrl ? { image: [imageUrl] } : {}),
+    ...(product.brand ? {
+      brand: {
+        '@type': 'Brand',
+        name: product.brand.name,
+      },
+    } : {}),
+    ...(product.categories[0] ? { category: product.categories[0].name } : {}),
+  };
   const webPageSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
@@ -146,12 +162,17 @@ const ProductDetailPage: React.FC = () => {
     description: seoDescription,
     url: productUrl,
     ...(imageUrl ? { primaryImageOfPage: { '@type': 'ImageObject', contentUrl: imageUrl } } : {}),
+    mainEntity: { '@id': `${productUrl}#product` },
   };
+  productSchema['@id'] = `${productUrl}#product`;
 
   return (
     <>
       <MetaTags title={seoTitle} description={seoDescription} ogImage={imageUrl} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([breadcrumbSchema, webPageSchema]) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify([productSchema, breadcrumbSchema, webPageSchema]) }}
+      />
 
       <div className="container">
         <div className={styles.page}>
@@ -182,7 +203,9 @@ const ProductDetailPage: React.FC = () => {
                   {product.brand && (
                     <div className={styles.metaItem}>
                       <span className={styles.metaLabel}>Thương hiệu</span>
-                      <span className={styles.metaValue}>{product.brand.name}</span>
+                      <Link to={`/thuong-hieu/${product.brand.slug}`} className={styles.metaValue}>
+                        {product.brand.name}
+                      </Link>
                     </div>
                   )}
                   <div className={styles.metaItem}>
