@@ -132,11 +132,34 @@ export class ProductRepository {
 
     let productIds: number[] | undefined;
     if (categoryId !== undefined) {
+      // A product may be assigned only to a leaf category. When the user
+      // filters by a parent category, include products from every descendant
+      // category as well. This keeps the catalog hierarchy useful even when
+      // uploads are normalized at the most specific category level.
+      const categoryIds = [categoryId];
+      let frontier = [categoryId];
+
+      while (frontier.length > 0) {
+        const children = await this.db
+          .select({ id: productCategory.id })
+          .from(productCategory)
+          .where(inArray(productCategory.parentCategoryId, frontier));
+
+        const childIds = children
+          .map((row) => row.id)
+          .filter((id) => !categoryIds.includes(id));
+
+        if (childIds.length === 0) break;
+        categoryIds.push(...childIds);
+        frontier = childIds;
+      }
+
       const mappings = await this.db
         .select({ productId: productCategoryMap.productId })
         .from(productCategoryMap)
-        .where(eq(productCategoryMap.categoryId, categoryId));
-      productIds = mappings.map((m) => m.productId);
+        .where(inArray(productCategoryMap.categoryId, categoryIds));
+
+      productIds = [...new Set(mappings.map((m) => m.productId))];
       if (productIds.length === 0) {
         return { data: [], total: 0, page: safePage, pageSize: safePageSize, totalPages: 0 };
       }
