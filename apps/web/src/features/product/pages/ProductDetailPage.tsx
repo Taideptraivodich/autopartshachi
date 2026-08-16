@@ -139,9 +139,10 @@ const ProductDetailPage: React.FC = () => {
       item: item.href ? `${SITE_CONFIG.url}${item.href}` : productUrl,
     })),
   };
-  const productSchema = {
+  const productSchema: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'Product',
+    '@id': `${productUrl}#product`,
     name: product.name,
     sku: product.sku,
     url: productUrl,
@@ -164,7 +165,6 @@ const ProductDetailPage: React.FC = () => {
     ...(imageUrl ? { primaryImageOfPage: { '@type': 'ImageObject', contentUrl: imageUrl } } : {}),
     mainEntity: { '@id': `${productUrl}#product` },
   };
-  productSchema['@id'] = `${productUrl}#product`;
 
   return (
     <>
