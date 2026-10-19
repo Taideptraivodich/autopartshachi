@@ -2,6 +2,7 @@ import React, { Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import FloatingZaloButton from './FloatingZaloButton';
 import { PageLoader } from '../ui/Skeleton';
 import styles from './PublicLayout.module.css';
 
@@ -14,6 +15,7 @@ const PublicLayout: React.FC = () => (
       </Suspense>
     </main>
     <Footer />
+    <FloatingZaloButton />
   </div>
 );
 

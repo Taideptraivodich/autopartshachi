@@ -127,6 +127,11 @@ export const FeaturedProductsSection: React.FC = () => {
             {products.map((product) => <FeaturedProductCard key={product.id} product={product} />)}
           </div>
         )}
+        <div className={styles.sectionFooter}>
+          <Link to="/san-pham" className={styles.sectionFooterLink}>
+            Xem tất cả <span aria-hidden="true">→</span>
+          </Link>
+        </div>
       </div>
     </section>
   );
@@ -174,6 +179,11 @@ export const PopularCategoriesSection: React.FC = () => {
             ))}
           </div>
         )}
+        <div className={styles.sectionFooter}>
+          <Link to="/danh-muc" className={styles.sectionFooterLink}>
+            Xem tất cả <span aria-hidden="true">→</span>
+          </Link>
+        </div>
       </div>
     </section>
   );
@@ -224,6 +234,11 @@ export const PopularBrandsSection: React.FC = () => {
             ))}
           </div>
         )}
+        <div className={styles.sectionFooter}>
+          <Link to="/thuong-hieu" className={styles.sectionFooterLink}>
+            Xem tất cả <span aria-hidden="true">→</span>
+          </Link>
+        </div>
       </div>
     </section>
   );
@@ -265,6 +280,11 @@ export const VehicleBrandsSection: React.FC = () => {
             ))}
           </div>
         )}
+        <div className={styles.sectionFooter}>
+          <Link to="/hang-xe" className={styles.sectionFooterLink}>
+            Xem tất cả <span aria-hidden="true">→</span>
+          </Link>
+        </div>
       </div>
     </section>
   );
