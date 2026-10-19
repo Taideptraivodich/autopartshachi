@@ -15,39 +15,10 @@ import type {
 } from '../../../features/product/api/types';
 import styles from './HomeSections.module.css';
 
-export const HeroSection: React.FC = () => (
-  <section className={styles.hero}>
-    <div className="container">
-      <div className={styles.heroInner}>
-        <div className={styles.heroCopy}>
-          <p className={styles.heroKicker}>HACHI / AUTOMOTIVE PARTS</p>
-          <h1 className={styles.heroTitle}>
-            Phụ tùng ô tô.<br />
-            <span>Giá tốt, giao nhanh.</span>
-          </h1>
-          <p className={styles.heroSubtitle}>
-            Khám phá phụ tùng theo hãng xe, đời xe hoặc mã OEM trong một không gian mua sắm gọn gàng, dễ tra cứu.
-          </p>
-          <div className={styles.heroActions}>
-            <Link to="/san-pham" className={styles.heroPrimary}>
-              Khám phá sản phẩm <span aria-hidden="true">→</span>
-            </Link>
-            <Link to="/hang-xe" className={styles.heroSecondary}>
-              Tra cứu theo hãng xe
-            </Link>
-          </div>
-        </div>
-        <div className={styles.heroMeta} aria-hidden="true">
-          <span>HACHI</span>
-          <span>OEM / AFTERMARKET</span>
-        </div>
-      </div>
-    </div>
-  </section>
-);
+export { HeroSection } from './HeroSection';
 
 export const VehicleFinderSection: React.FC = () => (
-  <section className={styles.finderSection}>
+  <section id="vehicle-finder" className={styles.finderSection}>
     <div className="container">
       <div className={styles.finderPanel}>
         <div className={styles.finderIntro}>
