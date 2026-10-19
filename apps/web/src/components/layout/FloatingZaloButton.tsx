@@ -5,7 +5,7 @@ import styles from './FloatingZaloButton.module.css';
 
 const FloatingZaloButton: React.FC = () => {
   const { zaloPhone } = useSiteSettings();
-  const phone = (zaloPhone || SITE_CONFIG.zaloPhone).replace(/\\D/g, '');
+  const phone = (zaloPhone || SITE_CONFIG.zaloPhone).replace(/\D/g, '');
 
   if (!phone) return null;
 
