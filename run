@@ -1,0 +1,66 @@
+
+> autoparts-monorepo@0.0.0 build
+> npm run build --workspace=apps/web
+
+
+> autoparts-web@0.0.0 build
+> tsc -b && vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 146 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                      2.52 kB │ gzip:   1.04 kB
+dist/assets/BlogPage-CDAJbIL7.css                    0.75 kB │ gzip:   0.36 kB
+dist/assets/Breadcrumb-BC86XBBI.css                  0.75 kB │ gzip:   0.31 kB
+dist/assets/Pagination-hv4uQS1R.css                  1.25 kB │ gzip:   0.49 kB
+dist/assets/Select-BlOeiSwh.css                      1.26 kB │ gzip:   0.50 kB
+dist/assets/ErrorPage-DCAg47Sb.css                   1.46 kB │ gzip:   0.53 kB
+dist/assets/CategoryPage-BaBlueN8.css                1.60 kB │ gzip:   0.55 kB
+dist/assets/Input-bGBe-t1h.css                       1.68 kB │ gzip:   0.60 kB
+dist/assets/ProductGrid-KgKI7kO7.css                 3.42 kB │ gzip:   1.15 kB
+dist/assets/BrandPage-Cvbrfxl9.css                   3.81 kB │ gzip:   1.10 kB
+dist/assets/Checkbox-7Yl8zf90.css                    4.25 kB │ gzip:   1.11 kB
+dist/assets/ProductListPage-JoCRgpZ5.css             4.68 kB │ gzip:   1.23 kB
+dist/assets/SearchPage-mumDFraA.css                  5.13 kB │ gzip:   1.58 kB
+dist/assets/OemPage-W3XaX8Gy.css                     5.40 kB │ gzip:   1.41 kB
+dist/assets/VehiclePage-s1WY-iPA.css                 6.34 kB │ gzip:   1.40 kB
+dist/assets/ProductDetailPage-okgC7b5G.css          12.68 kB │ gzip:   2.79 kB
+dist/assets/HomePage-CLgayrJL.css                   14.91 kB │ gzip:   3.14 kB
+dist/assets/index-JQB1C1uN.css                      22.66 kB │ gzip:   5.19 kB
+dist/assets/ErrorPage.module-DDIPzK9m.js             0.25 kB │ gzip:   0.17 kB
+dist/assets/useVehicleSelector-CTe6oBTi.js           0.30 kB │ gzip:   0.20 kB
+dist/assets/adminApiFetch-BkegvUXV.js                0.36 kB │ gzip:   0.28 kB
+dist/assets/ServerErrorPage-D5YesQXD.js              0.62 kB │ gzip:   0.42 kB
+dist/assets/NotFoundPage-Dnczdf2i.js                 0.71 kB │ gzip:   0.44 kB
+dist/assets/Breadcrumb-BYpFBOkN.js                   0.71 kB │ gzip:   0.44 kB
+dist/assets/admin-product.api-DoL2xeJy.js            0.87 kB │ gzip:   0.39 kB
+dist/assets/BlogPage-J3OdzeoS.js                     0.90 kB │ gzip:   0.52 kB
+dist/assets/Select-D-9Ue0c1.js                       1.05 kB │ gzip:   0.55 kB
+dist/assets/Pagination-DhWwjhNc.js                   1.38 kB │ gzip:   0.72 kB
+dist/assets/Input-BX49fSVP.js                        1.39 kB │ gzip:   0.67 kB
+dist/assets/MetaTags-CPDCX71K.js                     1.66 kB │ gzip:   0.78 kB
+dist/assets/AdminLoginPage-b7xjmMqP.js               1.69 kB │ gzip:   0.97 kB
+dist/assets/ProductGrid-C4Ic5D6R.js                  2.24 kB │ gzip:   1.01 kB
+dist/assets/AdminDashboardPage-dkSEufF0.js           2.50 kB │ gzip:   1.12 kB
+dist/assets/Checkbox-DEF75ixl.js                     2.60 kB │ gzip:   1.07 kB
+dist/assets/admin-catalog.api-DxJ1TQYy.js            3.00 kB │ gzip:   0.87 kB
+dist/assets/AdminSettingsPage-CUMR4_5w.js            3.16 kB │ gzip:   1.57 kB
+dist/assets/LienHePage-DwBJ99D9.js                   4.11 kB │ gzip:   1.71 kB
+dist/assets/SearchPage-D3GiyjVF.js                   4.86 kB │ gzip:   1.95 kB
+dist/assets/AdminProductListPage-bV-8giF0.js         4.98 kB │ gzip:   2.21 kB
+dist/assets/OemPage-CDCVQVVl.js                      5.79 kB │ gzip:   2.40 kB
+dist/assets/AdminCategoryListPage-ClHm3NFJ.js        6.17 kB │ gzip:   2.47 kB
+dist/assets/CategoryPage-BWuUNkjx.js                 6.34 kB │ gzip:   2.50 kB
+dist/assets/AdminLeadListPage-DN5eE9f1.js            6.49 kB │ gzip:   2.54 kB
+dist/assets/BrandPage-DywvyLQz.js                    6.71 kB │ gzip:   2.61 kB
+dist/assets/ProductListPage-QX1p1Ld3.js              6.74 kB │ gzip:   2.67 kB
+dist/assets/AdminBrandListPage-oXvQpds-.js           7.18 kB │ gzip:   2.78 kB
+dist/assets/VehiclePage-o0QnjVGQ.js                  9.70 kB │ gzip:   3.16 kB
+dist/assets/AdminVehicleBrandListPage-N2WowiGV.js   13.01 kB │ gzip:   4.06 kB
+dist/assets/ProductDetailPage-DIbDuknZ.js           13.60 kB │ gzip:   5.28 kB
+dist/assets/HomePage-BLNq6sHS.js                    14.48 kB │ gzip:   4.07 kB
+dist/assets/AdminProductFormPage-CgDUm8to.js        15.24 kB │ gzip:   5.28 kB
+dist/assets/index-B5A2Hs-Z.js                      313.24 kB │ gzip: 100.20 kB
+✓ built in 7.67s

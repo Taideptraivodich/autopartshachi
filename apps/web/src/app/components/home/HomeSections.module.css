@@ -34,9 +34,9 @@
 .sectionHeader { display:flex; align-items:flex-end; justify-content:space-between; gap:var(--space-8); margin-bottom:var(--space-8); }
 .sectionHeader .eyebrow { margin-bottom:var(--space-3); }
 .sectionTitle { margin:0; font-size:clamp(2rem,3vw,2.4rem); line-height:1.12; letter-spacing:-.03em; font-weight:var(--font-bold); color:var(--color-text-primary); }
-.sectionLink { flex-shrink:0; color:var(--color-text-primary); font-size:var(--text-sm); font-weight:var(--font-medium); text-decoration:none; border-bottom:1px solid var(--color-border); padding-bottom:5px; transition:color var(--transition-fast),border-color var(--transition-fast); }
+.sectionLink { margin-top:12px; flex-shrink:0; color:var(--color-text-primary); font-size:var(--text-sm); font-weight:var(--font-medium); text-decoration:none; border-bottom:1px solid var(--color-border); padding-bottom:5px; transition:color var(--transition-fast),border-color var(--transition-fast); }
 .sectionLink:hover { color:var(--color-primary-500); border-color:var(--color-primary-500); text-decoration:none; }
-.sectionFooter { display:flex; justify-content:center; margin-top:var(--space-7); }
+.sectionFooter { display:flex; justify-content:center; margin-top:var(--space-8); }
 .sectionFooterLink { display:inline-flex; align-items:center; justify-content:center; gap:var(--space-2); min-height:42px; padding:0 var(--space-5); border:1px solid var(--color-border); background:var(--color-surface); color:var(--color-text-primary); font-size:var(--text-sm); font-weight:var(--font-semibold); text-decoration:none; transition:color var(--transition-fast),border-color var(--transition-fast),background var(--transition-fast); }
 .sectionFooterLink:hover { color:var(--color-primary-700); border-color:var(--color-primary-300); background:var(--color-surface-2); text-decoration:none; }
 .emptyState { color:var(--color-text-secondary); font-size:var(--text-sm); }
